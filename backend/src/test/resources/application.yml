@@ -22,6 +22,10 @@ spring:
     username: blue
     password:
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
 
   jpa:
     hibernate:

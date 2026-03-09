@@ -10,6 +10,8 @@ public class MembershipMapper {
                 membership.getId(),
                 membership.getUser().getId(),
                 membership.getUser().getName(),
+                membership.getCause().getId(),
+                membership.getCause().getName(),
                 membership.getRole().name(),
                 membership.isApproved(),
                 membership.getJoinedAt()

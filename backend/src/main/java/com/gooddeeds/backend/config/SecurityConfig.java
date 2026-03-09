@@ -88,6 +88,9 @@ public class SecurityConfig {
                         //Public authentication endpoints (login, register)
                         .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
 
+                        //Health check endpoint
+                        .requestMatchers("/api/health").permitAll()
+
                         //Uer registration
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
 
@@ -99,6 +102,15 @@ public class SecurityConfig {
 
                         //Everything else requires authentication
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(401);
+                            response.setContentType("application/json");
+                            response.getWriter().write(
+                                    "{\"error\":\"Unauthorized\",\"message\":\"Authentication required\",\"status\":401}"
+                            );
+                        })
                 )
                 .addFilterBefore(
                         jwtFilter,
