@@ -7,5 +7,7 @@ public record GoalResponseDTO(
         UUID id,
         String title,
         String description,
+        UUID causeId,
+        String causeName,
         Instant createdAt
 ) {}

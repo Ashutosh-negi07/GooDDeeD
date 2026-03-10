@@ -1,18 +1,22 @@
 package com.gooddeeds.backend.service.impl;
 
-import com.gooddeeds.backend.controller.CreateUserRequest;
+import com.gooddeeds.backend.dto.CreateUserRequest;
 import com.gooddeeds.backend.exception.EmailAlreadyExistsException;
+import com.gooddeeds.backend.exception.ForbiddenException;
+import com.gooddeeds.backend.exception.ResourceNotFoundException;
 import com.gooddeeds.backend.model.User;
 import com.gooddeeds.backend.repository.UserRepository;
 import com.gooddeeds.backend.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -23,21 +27,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(CreateUserRequest request) {
-        // Normalize email: lowercase + trim
-        String normalizedEmail = request.getEmail().toLowerCase().trim();
+        String normalizedEmail = request.email().toLowerCase().trim();
 
         if (userRepository.existsByEmail(normalizedEmail)) {
             throw new EmailAlreadyExistsException("Email already exists");
         }
 
         User user = User.builder()
-                .name(request.getName().trim())
+                .name(request.name().trim())
                 .email(normalizedEmail)
-                .passwordHash(
-                        passwordEncoder.encode(request.getPassword())
-                )
+                .passwordHash(passwordEncoder.encode(request.password()))
                 .build();
 
+        log.info("User registered: {}", normalizedEmail);
         return userRepository.save(user);
     }
 
@@ -48,31 +50,33 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<User> getUserByEmail(String email) {
-        // Normalize email: lowercase + trim
         String normalizedEmail = email.toLowerCase().trim();
         return userRepository.findByEmail(normalizedEmail);
     }
 
     @Override
     public User authenticate(String email, String password) {
-        // Normalize email: lowercase + trim
         String normalizedEmail = email.toLowerCase().trim();
 
         User user = userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid credentials"));
 
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
-            // Generic message to prevent account enumeration
-            throw new RuntimeException("Invalid credentials");
+            throw new ForbiddenException("Invalid credentials");
         }
 
         return user;
     }
 
+    // C3 fix: Only the authenticated user can update their own profile
     @Override
-    public User updateUser(UUID id, String name, String email) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public User updateUser(UUID authenticatedUserId, UUID targetId, String name, String email) {
+        if (!authenticatedUserId.equals(targetId)) {
+            throw new ForbiddenException("You can only update your own profile");
+        }
+
+        User user = userRepository.findById(targetId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (name != null) {
             user.setName(name.trim());
@@ -85,14 +89,21 @@ public class UserServiceImpl implements UserService {
             user.setEmail(normalizedEmail);
         }
 
+        log.info("User {} updated their profile", targetId);
         return userRepository.save(user);
     }
 
+    // C3 fix: Only the authenticated user can delete their own account
     @Override
-    public void deleteUser(UUID id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public void deleteUser(UUID authenticatedUserId, UUID targetId) {
+        if (!authenticatedUserId.equals(targetId)) {
+            throw new ForbiddenException("You can only delete your own account");
+        }
+
+        User user = userRepository.findById(targetId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         userRepository.delete(user);
+        log.info("User {} deleted their account", targetId);
     }
 }
-

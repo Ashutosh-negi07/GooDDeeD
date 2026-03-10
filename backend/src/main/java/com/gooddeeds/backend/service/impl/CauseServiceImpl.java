@@ -1,41 +1,64 @@
 package com.gooddeeds.backend.service.impl;
 
-import com.gooddeeds.backend.controller.CreateCauseRequest;
-import com.gooddeeds.backend.controller.UpdateCauseRequest;
+import com.gooddeeds.backend.dto.CreateCauseRequest;
+import com.gooddeeds.backend.dto.UpdateCauseRequest;
+import com.gooddeeds.backend.exception.ResourceNotFoundException;
 import com.gooddeeds.backend.model.Cause;
 import com.gooddeeds.backend.model.CauseMembership;
 import com.gooddeeds.backend.model.Role;
+import com.gooddeeds.backend.model.User;
 import com.gooddeeds.backend.repository.CauseMembershipRepository;
 import com.gooddeeds.backend.repository.CauseRepository;
-import com.gooddeeds.backend.repository.GoalRepository;
+import com.gooddeeds.backend.repository.UserRepository;
+import com.gooddeeds.backend.service.AuthorizationService;
 import com.gooddeeds.backend.service.CauseService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class CauseServiceImpl implements CauseService {
 
     private final CauseRepository causeRepository;
-    private final GoalRepository goalRepository;
     private final CauseMembershipRepository membershipRepository;
+    private final UserRepository userRepository;
+    private final AuthorizationService authorizationService;
 
     @Override
-    public Cause createCause(CreateCauseRequest request) {
+    public Cause createCause(CreateCauseRequest request, UUID creatorUserId) {
         Cause cause = Cause.builder()
-                .name(request.getName())
-                .description(request.getDescription())
-                .restricted(request.isRestricted())
+                .name(request.name())
+                .description(request.description())
+                .restricted(request.restricted())
                 .build();
-        return causeRepository.save(cause);
+        cause = causeRepository.save(cause);
+
+        // H1 fix: Auto-join creator as ADMIN
+        User creator = userRepository.findById(creatorUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        CauseMembership membership = CauseMembership.builder()
+                .user(creator)
+                .cause(cause)
+                .role(Role.ADMIN)
+                .approved(true)
+                .build();
+        membershipRepository.save(membership);
+
+        log.info("Cause '{}' created by user {}", cause.getName(), creatorUserId);
+        return cause;
     }
 
-    //Getting all causes with pagination
     @Override
     public Page<Cause> getAllCauses(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -45,55 +68,44 @@ public class CauseServiceImpl implements CauseService {
     @Override
     public Cause getCauseById(UUID id) {
         return causeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cause not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cause not found"));
     }
 
-    //search causes by goal keyword with pagination
     @Override
     public Page<Cause> searchCausesByGoal(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return goalRepository.findCausesByGoalKeyword(keyword, pageable);
+        return causeRepository.searchByKeyword(keyword, pageable);
     }
 
-    //update cause (admin only)
     @Override
     public Cause updateCause(UUID causeId, UpdateCauseRequest request, UUID adminUserId) {
         Cause cause = causeRepository.findById(causeId)
-                .orElseThrow(() -> new RuntimeException("Cause not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cause not found"));
 
-        CauseMembership adminMembership = membershipRepository.findByUserIdAndCauseId(adminUserId, causeId)
-                .orElseThrow(() -> new RuntimeException("Not a member of this cause"));
+        authorizationService.requireAdmin(adminUserId, causeId);
 
-        if (adminMembership.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Only ADMIN can update cause");
+        if (request.name() != null) {
+            cause.setName(request.name());
+        }
+        if (request.description() != null) {
+            cause.setDescription(request.description());
+        }
+        if (request.restricted() != null) {
+            cause.setRestricted(request.restricted());
         }
 
-        if (request.getName() != null) {
-            cause.setName(request.getName());
-        }
-        if (request.getDescription() != null) {
-            cause.setDescription(request.getDescription());
-        }
-        cause.setRestricted(request.isRestricted());
-
+        log.info("Cause {} updated by admin {}", causeId, adminUserId);
         return causeRepository.save(cause);
     }
 
-    //delete cause (admin only)
     @Override
     public void deleteCause(UUID causeId, UUID adminUserId) {
         Cause cause = causeRepository.findById(causeId)
-                .orElseThrow(() -> new RuntimeException("Cause not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cause not found"));
 
-        CauseMembership adminMembership = membershipRepository.findByUserIdAndCauseId(adminUserId, causeId)
-                .orElseThrow(() -> new RuntimeException("Not a member of this cause"));
-
-        if (adminMembership.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Only ADMIN can delete cause");
-        }
+        authorizationService.requireAdmin(adminUserId, causeId);
 
         causeRepository.delete(cause);
+        log.info("Cause {} deleted by admin {}", causeId, adminUserId);
     }
 }
-
-

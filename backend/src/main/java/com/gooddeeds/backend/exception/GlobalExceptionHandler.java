@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = new HashMap<>();
-        
+
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 fieldErrors.put(error.getField(), error.getDefaultMessage())
         );
@@ -49,7 +49,49 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    /* ---------- SPECIFIC EXCEPTION ---------- */
+    /* ---------- RESOURCE NOT FOUND (404) ---------- */
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNotFound(ResourceNotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "timestamp", Instant.now(),
+                        "status", 404,
+                        "error", "Not Found",
+                        "message", ex.getMessage()
+                ));
+    }
+
+    /* ---------- FORBIDDEN (403) ---------- */
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Map<String, Object>> handleForbidden(ForbiddenException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(Map.of(
+                        "timestamp", Instant.now(),
+                        "status", 403,
+                        "error", "Forbidden",
+                        "message", ex.getMessage()
+                ));
+    }
+
+    /* ---------- CONFLICT (409) ---------- */
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleConflict(ConflictException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Map.of(
+                        "timestamp", Instant.now(),
+                        "status", 409,
+                        "error", "Conflict",
+                        "message", ex.getMessage()
+                ));
+    }
+
+    /* ---------- EMAIL ALREADY EXISTS (409) ---------- */
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleEmailExists(EmailAlreadyExistsException ex) {
@@ -63,17 +105,17 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    /* ---------- CATCH-ALL (MOST IMPORTANT) ---------- */
+    /* ---------- CATCH-ALL ---------- */
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntime(RuntimeException ex) {
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
                         "timestamp", Instant.now(),
-                        "status", 400,
-                        "error", "Bad Request",
-                        "message", ex.getMessage()
+                        "status", 500,
+                        "error", "Internal Server Error",
+                        "message", "An unexpected error occurred"
                 ));
     }
 }

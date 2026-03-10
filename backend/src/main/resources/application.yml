@@ -44,6 +44,10 @@ spring:
     restart:
       enabled: false
 
+jwt:
+  secret: ${JWT_SECRET:THIS_IS_A_DEMO_SECRET_KEY_CHANGE_IT_LATER_123456}
+  expiration: ${JWT_EXPIRATION:86400000}
+
 server:
   tomcat:
     threads:
@@ -51,5 +55,3 @@ server:
       min-spare: 20
     accept-count: 100
     max-connections: 10000
-
-

@@ -36,4 +36,6 @@ spring:
     restart:
       enabled: false
 
-
+jwt:
+  secret: TEST_SECRET_KEY_FOR_UNIT_TESTS_ONLY_1234567890
+  expiration: 86400000

@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Environment
+.env
+
+# Java / Maven
+backend/target/
+*.class
+*.jar
+*.war
+
+# Node
+node_modules/
+dist/

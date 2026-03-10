@@ -10,6 +10,8 @@ public class GoalMapper {
                 goal.getId(),
                 goal.getTitle(),
                 goal.getDescription(),
+                goal.getCause().getId(),
+                goal.getCause().getName(),
                 goal.getCreatedAt()
         );
     }

@@ -2,6 +2,7 @@ package com.gooddeeds.backend.repository;
 
 import com.gooddeeds.backend.model.Cause;
 import com.gooddeeds.backend.model.CauseMembership;
+import com.gooddeeds.backend.model.Role;
 import com.gooddeeds.backend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -20,10 +21,9 @@ public interface CauseMembershipRepository
 
     List<CauseMembership> findByUserId(UUID userId);
 
-    //REQUIRED for admin approval
+    // REQUIRED for admin approval
     Optional<CauseMembership> findByUserIdAndCauseId(UUID userId, UUID causeId);
+
+    // Count admins in a cause (for preventing last admin from leaving)
+    long countByCauseIdAndRole(UUID causeId, Role role);
 }
-
-
-
-

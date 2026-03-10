@@ -91,13 +91,13 @@ public class SecurityConfig {
                         //Health check endpoint
                         .requestMatchers("/api/health").permitAll()
 
-                        //Uer registration
-                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-
-                        //Public GET endpoints for causes and goals
+                        //Public GET: browse/search causes & goals (but NOT /my endpoints)
                         .requestMatchers(HttpMethod.GET,
-                                "/api/causes/**",
-                                "/api/goals/**"
+                                "/api/causes",
+                                "/api/causes/search",
+                                "/api/causes/{causeId}",
+                                "/api/goals/{goalId}",
+                                "/api/goals/cause/{causeId}"
                         ).permitAll()
 
                         //Everything else requires authentication

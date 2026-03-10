@@ -1,7 +1,7 @@
 
 package com.gooddeeds.backend.service;
 
-import com.gooddeeds.backend.controller.CreateUserRequest;
+import com.gooddeeds.backend.dto.CreateUserRequest;
 import com.gooddeeds.backend.model.User;
 
 import java.util.Optional;
@@ -17,8 +17,7 @@ public interface UserService {
 
     User authenticate(String email, String password);
 
-    User updateUser(UUID id, String name, String email);
+    User updateUser(UUID authenticatedUserId, UUID targetId, String name, String email);
 
-    void deleteUser(UUID id);
+    void deleteUser(UUID authenticatedUserId, UUID targetId);
 }
-

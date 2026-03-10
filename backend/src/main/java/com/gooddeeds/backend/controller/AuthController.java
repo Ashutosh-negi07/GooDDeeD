@@ -1,5 +1,6 @@
 package com.gooddeeds.backend.controller;
 
+import com.gooddeeds.backend.dto.CreateUserRequest;
 import com.gooddeeds.backend.dto.LoginRequest;
 import com.gooddeeds.backend.dto.UserResponseDTO;
 import com.gooddeeds.backend.mapper.UserMapper;
@@ -23,61 +24,54 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
-    private final UserRepository userRepository;
-    private final UserService userService;
+        private final AuthenticationManager authenticationManager;
+        private final JwtService jwtService;
+        private final UserRepository userRepository;
+        private final UserService userService;
 
-    //Register and return JWT token
-    @PostMapping("/register")
-    public Map<String, Object> register(@Valid @RequestBody CreateUserRequest request) {
-        // Create user
-        User user = userService.createUser(request);
-        
-        // Generate token
-        String token = jwtService.generateToken(user.getEmail(), user.getId());
+        // Register and return JWT token
+        @PostMapping("/register")
+        public Map<String, Object> register(@Valid @RequestBody CreateUserRequest request) {
+                // Create user
+                User user = userService.createUser(request);
 
-        return Map.of(
-                "token", token,
-                "user", UserMapper.toDTO(user)
-        );
-    }
+                // Generate token
+                String token = jwtService.generateToken(user.getEmail(), user.getId());
 
-    //Login and return JWT token
-    @PostMapping("/login")
-    public Map<String, Object> login(@Valid @RequestBody LoginRequest request) {
+                return Map.of(
+                                "token", token,
+                                "user", UserMapper.toDTO(user));
+        }
 
-        Authentication authentication =
-                authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(
-                                request.getEmail(),
-                                request.getPassword()
-                        )
-                );
+        // Login and return JWT token
+        @PostMapping("/login")
+        public Map<String, Object> login(@Valid @RequestBody LoginRequest request) {
 
-        String email = authentication.getName();
-        
-        // Fetch user to get the ID for the token
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalStateException("User not found after authentication"));
-        
-        String token = jwtService.generateToken(email, user.getId());
+                Authentication authentication = authenticationManager.authenticate(
+                                new UsernamePasswordAuthenticationToken(
+                                                request.email(),
+                                                request.password()));
 
-        return Map.of(
-                "token", token,
-                "user", UserMapper.toDTO(user)
-        );
-    }
+                String email = authentication.getName();
 
-    //Get current authenticated user's profile
-    @GetMapping("/me")
-    public UserResponseDTO getCurrentUser() {
-        UUID userId = SecurityUtils.getCurrentUserId();
-        
-        return userRepository.findById(userId)
-                .map(UserMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-    }
+                // Fetch user to get the ID for the token
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new IllegalStateException("User not found after authentication"));
+
+                String token = jwtService.generateToken(email, user.getId());
+
+                return Map.of(
+                                "token", token,
+                                "user", UserMapper.toDTO(user));
+        }
+
+        // Get current authenticated user's profile
+        @GetMapping("/me")
+        public UserResponseDTO getCurrentUser() {
+                UUID userId = SecurityUtils.getCurrentUserId();
+
+                return userRepository.findById(userId)
+                                .map(UserMapper::toDTO)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+        }
 }
-
-

@@ -1,7 +1,7 @@
 package com.gooddeeds.backend.service;
 
-import com.gooddeeds.backend.controller.CreateCauseRequest;
-import com.gooddeeds.backend.controller.UpdateCauseRequest;
+import com.gooddeeds.backend.dto.CreateCauseRequest;
+import com.gooddeeds.backend.dto.UpdateCauseRequest;
 import com.gooddeeds.backend.model.Cause;
 import org.springframework.data.domain.Page;
 
@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface CauseService {
 
-    Cause createCause(CreateCauseRequest request);
+    Cause createCause(CreateCauseRequest request, UUID creatorUserId);
 
     Page<Cause> getAllCauses(int page, int size);
 
@@ -21,6 +21,3 @@ public interface CauseService {
 
     void deleteCause(UUID causeId, UUID adminUserId);
 }
-
-
-

@@ -1,5 +1,8 @@
 package com.gooddeeds.backend.service.impl;
 
+import com.gooddeeds.backend.exception.ConflictException;
+import com.gooddeeds.backend.exception.ForbiddenException;
+import com.gooddeeds.backend.exception.ResourceNotFoundException;
 import com.gooddeeds.backend.model.Cause;
 import com.gooddeeds.backend.model.CauseMembership;
 import com.gooddeeds.backend.model.Role;
@@ -10,11 +13,13 @@ import com.gooddeeds.backend.repository.UserRepository;
 import com.gooddeeds.backend.service.MembershipService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -24,19 +29,16 @@ public class MembershipServiceImpl implements MembershipService {
     private final CauseRepository causeRepository;
     private final CauseMembershipRepository membershipRepository;
 
-    //join cause
-
     @Override
     public CauseMembership joinCause(UUID userId, UUID causeId) {
-
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Cause cause = causeRepository.findById(causeId)
-                .orElseThrow(() -> new RuntimeException("Cause not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cause not found"));
 
         if (membershipRepository.existsByUserAndCause(user, cause)) {
-            throw new RuntimeException("User already joined this cause");
+            throw new ConflictException("User already joined this cause");
         }
 
         boolean approved = !cause.isRestricted();
@@ -53,83 +55,79 @@ public class MembershipServiceImpl implements MembershipService {
                 .approved(approved || role == Role.ADMIN)
                 .build();
 
+        log.info("User {} joined cause {} with role {}", userId, causeId, role);
         return membershipRepository.save(membership);
     }
-
-    //get membership by ID
 
     @Override
     public CauseMembership getMembershipById(UUID membershipId) {
         return membershipRepository.findById(membershipId)
-                .orElseThrow(() -> new RuntimeException("Membership not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Membership not found"));
     }
-
-    //get members of cause
 
     @Override
     public List<CauseMembership> getMembersOfCause(UUID causeId) {
         return membershipRepository.findByCauseId(causeId);
     }
 
-    //get memberships by user ID
-
     @Override
     public List<CauseMembership> getMembershipsByUserId(UUID userId) {
         return membershipRepository.findByUserId(userId);
     }
 
-    //approve member by the admin
-
     @Override
     public CauseMembership approveMembership(UUID adminUserId, UUID membershipId) {
-
         CauseMembership membership = membershipRepository.findById(membershipId)
-                .orElseThrow(() -> new RuntimeException("Membership not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Membership not found"));
 
         UUID causeId = membership.getCause().getId();
 
         CauseMembership adminMembership =
                 membershipRepository.findByUserIdAndCauseId(adminUserId, causeId)
-                        .orElseThrow(() -> new RuntimeException("Admin not part of this cause"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Admin not part of this cause"));
 
         if (adminMembership.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Only ADMIN can approve members");
+            throw new ForbiddenException("Only ADMIN can approve members");
         }
 
         membership.approve();
+        log.info("Membership {} approved by admin {}", membershipId, adminUserId);
         return membershipRepository.save(membership);
     }
 
-    //reject member by the admin
-
     @Override
     public void rejectMembership(UUID adminUserId, UUID membershipId) {
-
         CauseMembership membership = membershipRepository.findById(membershipId)
-                .orElseThrow(() -> new RuntimeException("Membership not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Membership not found"));
 
         UUID causeId = membership.getCause().getId();
 
         CauseMembership adminMembership =
                 membershipRepository.findByUserIdAndCauseId(adminUserId, causeId)
-                        .orElseThrow(() -> new RuntimeException("Admin not part of this cause"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Admin not part of this cause"));
 
         if (adminMembership.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Only ADMIN can reject members");
+            throw new ForbiddenException("Only ADMIN can reject members");
         }
 
         membershipRepository.delete(membership);
+        log.info("Membership {} rejected by admin {}", membershipId, adminUserId);
     }
 
-    //leave cause
-
+    // H2 fix: Prevent last admin from leaving
     @Override
     public void leaveCause(UUID userId, UUID causeId) {
         CauseMembership membership = membershipRepository.findByUserIdAndCauseId(userId, causeId)
-                .orElseThrow(() -> new RuntimeException("Membership not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Membership not found"));
+
+        if (membership.getRole() == Role.ADMIN) {
+            long adminCount = membershipRepository.countByCauseIdAndRole(causeId, Role.ADMIN);
+            if (adminCount <= 1) {
+                throw new ForbiddenException("Cannot leave: you are the last admin. Promote another member first.");
+            }
+        }
 
         membershipRepository.delete(membership);
+        log.info("User {} left cause {}", userId, causeId);
     }
 }
-
-

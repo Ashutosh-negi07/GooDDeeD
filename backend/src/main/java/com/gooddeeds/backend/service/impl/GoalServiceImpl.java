@@ -1,15 +1,26 @@
 package com.gooddeeds.backend.service.impl;
 
-import com.gooddeeds.backend.model.*;
-import com.gooddeeds.backend.repository.*;
+import com.gooddeeds.backend.dto.CreateGoalRequest;
+import com.gooddeeds.backend.dto.UpdateGoalRequest;
+import com.gooddeeds.backend.exception.ResourceNotFoundException;
+import com.gooddeeds.backend.model.Cause;
+import com.gooddeeds.backend.model.Goal;
+import com.gooddeeds.backend.repository.CauseRepository;
+import com.gooddeeds.backend.repository.GoalRepository;
+import com.gooddeeds.backend.service.AuthorizationService;
 import com.gooddeeds.backend.service.GoalService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -17,42 +28,30 @@ public class GoalServiceImpl implements GoalService {
 
     private final GoalRepository goalRepository;
     private final CauseRepository causeRepository;
-    private final CauseMembershipRepository membershipRepository;
-
-    //Create goal (admin only)
+    private final AuthorizationService authorizationService;
 
     @Override
-    public Goal createGoal(UUID adminUserId, UUID causeId, String title, String description) {
+    public Goal createGoal(UUID adminUserId, CreateGoalRequest request) {
+        Cause cause = causeRepository.findById(request.causeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Cause not found"));
 
-        Cause cause = causeRepository.findById(causeId)
-                .orElseThrow(() -> new RuntimeException("Cause not found"));
-
-        CauseMembership adminMembership =
-                membershipRepository.findByUserIdAndCauseId(adminUserId, causeId)
-                        .orElseThrow(() -> new RuntimeException("Not a member of this cause"));
-
-        if (adminMembership.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Only ADMIN can create goals");
-        }
+        authorizationService.requireAdmin(adminUserId, request.causeId());
 
         Goal goal = Goal.builder()
-                .title(title)
-                .description(description)
+                .title(request.title())
+                .description(request.description())
                 .cause(cause)
                 .build();
 
+        log.info("Goal '{}' created for cause {} by admin {}", request.title(), request.causeId(), adminUserId);
         return goalRepository.save(goal);
     }
-
-    //get goal by ID
 
     @Override
     public Goal getGoalById(UUID goalId) {
         return goalRepository.findById(goalId)
-                .orElseThrow(() -> new RuntimeException("Goal not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found"));
     }
-
-    //get goals of a cause (paginated)
 
     @Override
     public Page<Goal> getGoalsOfCause(UUID causeId, int page, int size) {
@@ -60,50 +59,34 @@ public class GoalServiceImpl implements GoalService {
         return goalRepository.findByCauseId(causeId, pageable);
     }
 
-    //update goal (admin only)
-
     @Override
-    public Goal updateGoal(UUID adminUserId, UUID goalId, String title, String description) {
+    public Goal updateGoal(UUID adminUserId, UUID goalId, UpdateGoalRequest request) {
         Goal goal = goalRepository.findById(goalId)
-                .orElseThrow(() -> new RuntimeException("Goal not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found"));
 
         UUID causeId = goal.getCause().getId();
+        authorizationService.requireAdmin(adminUserId, causeId);
 
-        CauseMembership adminMembership =
-                membershipRepository.findByUserIdAndCauseId(adminUserId, causeId)
-                        .orElseThrow(() -> new RuntimeException("Not a member of this cause"));
-
-        if (adminMembership.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Only ADMIN can update goals");
+        if (request.title() != null) {
+            goal.setTitle(request.title());
+        }
+        if (request.description() != null) {
+            goal.setDescription(request.description());
         }
 
-        if (title != null) {
-            goal.setTitle(title);
-        }
-        if (description != null) {
-            goal.setDescription(description);
-        }
-
+        log.info("Goal {} updated by admin {}", goalId, adminUserId);
         return goalRepository.save(goal);
     }
-
-    //delete goal (admin only)
 
     @Override
     public void deleteGoal(UUID adminUserId, UUID goalId) {
         Goal goal = goalRepository.findById(goalId)
-                .orElseThrow(() -> new RuntimeException("Goal not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found"));
 
         UUID causeId = goal.getCause().getId();
-
-        CauseMembership adminMembership =
-                membershipRepository.findByUserIdAndCauseId(adminUserId, causeId)
-                        .orElseThrow(() -> new RuntimeException("Not a member of this cause"));
-
-        if (adminMembership.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Only ADMIN can delete goals");
-        }
+        authorizationService.requireAdmin(adminUserId, causeId);
 
         goalRepository.delete(goal);
+        log.info("Goal {} deleted by admin {}", goalId, adminUserId);
     }
 }

@@ -1,8 +1,13 @@
 
 package com.gooddeeds.backend.security;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
@@ -12,19 +17,23 @@ import java.util.UUID;
 @Service
 public class JwtService {
 
-    private static final String SECRET =
-            "THIS_IS_A_DEMO_SECRET_KEY_CHANGE_IT_LATER_123456";
+    private final Key key;
+    private final long expiration;
 
-    private static final long EXPIRATION = 24 * 60 * 60 * 1000;
-
-    private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
+    public JwtService(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration:86400000}") long expiration
+    ) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        this.expiration = expiration;
+    }
 
     public String generateToken(String email, UUID userId) {
         return Jwts.builder()
                 .setSubject(email)
                 .claim("userId", userId.toString())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -54,4 +63,3 @@ public class JwtService {
                 .parseClaimsJws(token);
     }
 }
-
