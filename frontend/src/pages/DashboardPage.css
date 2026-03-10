@@ -1,0 +1,349 @@
+/* ===== DASHBOARD PAGE ===== */
+
+.dashboard {
+  min-height: 100vh;
+  background: var(--color-bg-light);
+}
+
+/* === Dashboard Navbar === */
+
+.dash-navbar {
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.dash-navbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.dash-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dash-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dash-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.dash-user-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.dash-logout {
+  padding: 8px 20px;
+  font-size: 0.85rem;
+}
+
+/* === Main === */
+
+.dash-main {
+  padding: 32px 0 64px;
+}
+
+/* === Welcome Banner === */
+
+.dash-welcome {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.dash-welcome-text h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-white);
+  margin-bottom: 6px;
+}
+
+.dash-welcome-text p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+}
+
+.dash-welcome .btn-primary {
+  background: var(--color-white);
+  color: var(--color-primary);
+  border-color: var(--color-white);
+}
+
+.dash-welcome .btn-primary:hover {
+  background: transparent;
+  color: var(--color-white);
+  border-color: var(--color-white);
+}
+
+/* === Stats Grid === */
+
+.dash-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.dash-stat-card {
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-normal);
+}
+
+.dash-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.dash-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dash-stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-stat-number {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.dash-stat-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* === Section === */
+
+.dash-section {
+  margin-bottom: 40px;
+}
+
+.dash-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 20px;
+}
+
+/* === Empty State === */
+
+.dash-empty {
+  background: var(--color-white);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 48px;
+  text-align: center;
+}
+
+.dash-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.dash-empty h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.dash-empty p {
+  color: var(--color-text-muted);
+  margin-bottom: 24px;
+  font-size: 0.95rem;
+}
+
+/* === Causes Grid === */
+
+.dash-causes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.dash-cause-card {
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-normal);
+}
+
+.dash-cause-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.dash-cause-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.dash-cause-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-lighter);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.dash-cause-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.dash-cause-badge {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.dash-cause-desc {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* === Profile Card === */
+
+.dash-profile-card {
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.dash-profile-row {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dash-profile-row:last-child {
+  border-bottom: none;
+}
+
+.dash-profile-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.dash-profile-value {
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+/* === Loading === */
+
+.dash-loading {
+  text-align: center;
+  padding: 64px;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+}
+
+/* === Responsive === */
+
+@media (max-width: 1024px) {
+  .dash-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dash-welcome {
+    padding: 24px;
+  }
+
+  .dash-welcome-text h1 {
+    font-size: 1.35rem;
+  }
+
+  .dash-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .dash-stat-card {
+    padding: 16px;
+  }
+
+  .dash-stat-number {
+    font-size: 1.35rem;
+  }
+
+  .dash-user-name {
+    display: none;
+  }
+
+  .dash-causes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .dash-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
