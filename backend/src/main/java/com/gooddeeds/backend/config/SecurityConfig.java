@@ -44,6 +44,8 @@ public class SecurityConfig {
         // Allowed origins (frontend URLs)
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",    // Vite default
+                "http://localhost:5174",    // Vite fallback
+                "http://localhost:5175",    // Vite fallback
                 "http://localhost:3000",    // React default
                 "http://localhost:4200"     // Angular default
         ));

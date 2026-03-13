@@ -21,7 +21,7 @@ function LandingPage() {
 
           <ul className="navbar-links">
             <li><a href="#hero">Home</a></li>
-            <li><a href="#causes">Causes</a></li>
+            <li><Link to="/explore">Explore</Link></li>
             <li><a href="#how-it-works">About</a></li>
             <li><a href="#cta">Contact</a></li>
           </ul>
@@ -70,9 +70,9 @@ function LandingPage() {
             <Link to="/register" className="btn btn-primary btn-lg">
               Get Started <span className="btn-arrow">→</span>
             </Link>
-            <a href="#causes" className="btn btn-outline-white btn-lg">
+            <Link to="/explore" className="btn btn-outline-white btn-lg">
               Explore Causes
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -228,7 +228,7 @@ function LandingPage() {
             </ul>
           </div>
 
-          <div className="footer-links-group">
+          {/* <div className="footer-links-group">
             <h4 className="footer-heading">Support</h4>
             <ul className="footer-links">
               <li><a href="#">FAQ</a></li>
@@ -236,7 +236,7 @@ function LandingPage() {
               <li><a href="#">Terms of Service</a></li>
               <li><a href="#">Contact Us</a></li>
             </ul>
-          </div>
+          </div> */}
 
           <div className="footer-links-group">
             <h4 className="footer-heading">Contact</h4>

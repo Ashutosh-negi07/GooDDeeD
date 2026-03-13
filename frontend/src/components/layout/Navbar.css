@@ -1,0 +1,13 @@
+/* Shared Navbar — reuses the same styles from LandingPage.css navbar.
+   These are scoped duplicates so we don't depend on LandingPage being loaded. */
+
+.nav-shared .navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+}
