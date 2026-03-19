@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { causesAPI } from '../api/causes'
 import './LandingPage.css'
 import heroImg from '../assets/hero-volunteers.png'
 import causeTeaching from '../assets/cause-teaching.png'
@@ -8,6 +10,21 @@ import causeTrees from '../assets/cause-trees.png'
 
 function LandingPage() {
   const { user, logout } = useAuth()
+  const [featuredCauseIds, setFeaturedCauseIds] = useState([])
+
+  useEffect(() => {
+    const fetchFeaturedCauseIds = async () => {
+      try {
+        const res = await causesAPI.getAll(0, 3)
+        const ids = (res.data?.content || []).map(cause => cause.id).filter(Boolean)
+        setFeaturedCauseIds(ids)
+      } catch {
+        setFeaturedCauseIds([])
+      }
+    }
+
+    fetchFeaturedCauseIds()
+  }, [])
 
   return (
     <div className="landing">
@@ -99,9 +116,9 @@ function LandingPage() {
                   Help educate underprivileged children by volunteering as a tutor
                   or mentor in local schools and community centers.
                 </p>
-                <a href="#" className="cause-card-link">
+                <Link to={featuredCauseIds[0] ? `/causes/${featuredCauseIds[0]}` : '/explore'} className="cause-card-link">
                   Learn More <span>→</span>
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -116,9 +133,9 @@ function LandingPage() {
                   Join neighborhood cleanup drives to keep our parks, streets,
                   and waterways clean and beautiful for everyone.
                 </p>
-                <a href="#" className="cause-card-link">
+                <Link to={featuredCauseIds[1] ? `/causes/${featuredCauseIds[1]}` : '/explore'} className="cause-card-link">
                   Learn More <span>→</span>
-                </a>
+                </Link>
               </div>
             </div>
 
@@ -133,9 +150,9 @@ function LandingPage() {
                   Help restore our planet by planting trees in deforested areas
                   and urban spaces that need more green cover.
                 </p>
-                <a href="#" className="cause-card-link">
+                <Link to={featuredCauseIds[2] ? `/causes/${featuredCauseIds[2]}` : '/explore'} className="cause-card-link">
                   Learn More <span>→</span>
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -222,7 +239,7 @@ function LandingPage() {
             <h4 className="footer-heading">Quick Links</h4>
             <ul className="footer-links">
               <li><a href="#">Home</a></li>
-              <li><a href="#causes">Causes</a></li>
+              <li><Link to="/explore">Causes</Link></li>
               <li><a href="#how-it-works">About Us</a></li>
               <li><a href="#">Volunteer</a></li>
             </ul>

@@ -21,6 +21,9 @@
 
 .cd-header {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   padding: 100px 0 48px;
   color: var(--color-white);
 }

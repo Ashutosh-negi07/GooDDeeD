@@ -1,19 +1,16 @@
 {
-  "timestamp": "2026-02-19T16:25:35.290Z",
-  "scenarios": [
-    "smoke",
-    "load",
-    "stress",
-    "spike"
-  ],
+  "timestamp": "2026-03-15T05:36:05.417Z",
+  "profile": "full",
+  "baseUrl": "http://localhost:8080",
   "metrics": {
-    "http_reqs": 65692,
-    "avg_duration_ms": "333.85",
-    "p95_duration_ms": "1820.87",
+    "http_reqs": 269797,
+    "avg_duration_ms": "88.68",
+    "p95_duration_ms": "405.27",
     "p99_duration_ms": "N/A",
-    "error_rate": "0.0870",
-    "login_success": "1.0000",
-    "register_success": "1.0000",
-    "api_errors": 0
+    "http_failed_rate": "0.0000",
+    "contract_checks_rate": "1.0000",
+    "api_errors": 0,
+    "unexpected_4xx": 0,
+    "server_5xx": 0
   }
 }

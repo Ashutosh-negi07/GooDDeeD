@@ -1,0 +1,103 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      leak-detection-threshold: 60000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # CRITICAL: Only validate in production
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        jdbc:
+          batch_size: 20
+        cache:
+          use_second_level_cache: false
+
+  # Flyway configuration for database migrations
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    out-of-order: false
+    locations: classpath:db/migration
+    # Skip sample data migration in production
+    ignore-migration-patterns: "**/V2__*"
+
+  security:
+    headers:
+      frame-options: DENY
+      content-type-options: true
+      xss-protection: true
+      referrer-policy: strict-origin-when-cross-origin
+
+server:
+  port: ${SERVER_PORT:8080}
+  tomcat:
+    max-threads: 200
+    max-connections: 8192
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:3600000}
+
+# CORS Configuration
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://localhost:3000}
+  allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,OPTIONS}
+  allowed-headers: ${CORS_ALLOWED_HEADERS:*}
+  allow-credentials: true
+  max-age: 3600
+
+# Logging Configuration
+logging:
+  level:
+    root: ${LOGGING_LEVEL_ROOT:INFO}
+    com.gooddeeds: ${LOGGING_LEVEL_COM_GOODDEEDS:INFO}
+    org.springframework.security: WARN
+    org.hibernate: WARN
+  pattern:
+    console: ${LOGGING_PATTERN_CONSOLE:%d{yyyy-MM-dd HH:mm:ss} - %msg%n}
+    file: ${LOGGING_PATTERN_FILE:%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n}
+  file:
+    name: logs/gooddeeds-application.log
+    max-size: 100MB
+    max-history: 30
+
+# Management and Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,info,metrics}
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: ${MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS:when_authorized}
+      show-components: when_authorized
+    metrics:
+      enabled: true
+  info:
+    env:
+      enabled: true

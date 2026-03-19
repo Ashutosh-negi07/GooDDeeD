@@ -118,7 +118,7 @@ function DashboardPage() {
               ) : (
                 <div className="dash-causes-grid">
                   {causes.map((cause) => (
-                    <div key={cause.id} className="dash-cause-card">
+                    <Link key={cause.id} to={`/causes/${cause.id}`} className="dash-cause-card">
                       <div className="dash-cause-header">
                         <div className="dash-cause-avatar">
                           {cause.name?.charAt(0)?.toUpperCase()}
@@ -133,7 +133,7 @@ function DashboardPage() {
                       <p className="dash-cause-desc">
                         {cause.description || 'No description provided.'}
                       </p>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}

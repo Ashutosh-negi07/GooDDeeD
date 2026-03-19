@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { User, Mail, Calendar, Save } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import api from '../api/axios'
@@ -7,7 +8,7 @@ import DashboardLayout from '../components/layout/DashboardLayout'
 import './ProfilePage.css'
 
 function ProfilePage() {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(user?.name || '')
   const [email, setEmail] = useState(user?.email || '')
@@ -18,7 +19,8 @@ function ProfilePage() {
     setSaving(true)
     try {
       await api.put(`/users/${user.id}`, null, { params: { name, email } })
-      toast.success('Profile updated! Changes will appear on next login.')
+      updateUser({ name, email })
+      toast.success('Profile updated!')
       setEditing(false)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update profile')
@@ -92,22 +94,22 @@ function ProfilePage() {
         <div className="profile-section">
           <h3>Quick Links</h3>
           <div className="profile-links">
-            <a href="/dashboard" className="profile-link-card">
+            <Link to="/dashboard" className="profile-link-card">
               <span className="profile-link-icon">📊</span>
               <span>Dashboard</span>
-            </a>
-            <a href="/dashboard/tasks" className="profile-link-card">
+            </Link>
+            <Link to="/dashboard/tasks" className="profile-link-card">
               <span className="profile-link-icon">✅</span>
               <span>My Tasks</span>
-            </a>
-            <a href="/dashboard/causes" className="profile-link-card">
+            </Link>
+            <Link to="/dashboard/causes" className="profile-link-card">
               <span className="profile-link-icon">❤️</span>
               <span>My Causes</span>
-            </a>
-            <a href="/explore" className="profile-link-card">
+            </Link>
+            <Link to="/explore" className="profile-link-card">
               <span className="profile-link-icon">🔍</span>
               <span>Explore</span>
-            </a>
+            </Link>
           </div>
         </div>
       </div>

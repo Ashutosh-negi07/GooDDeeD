@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { LayoutDashboard, ListTodo, Heart, User, LogOut, Search } from 'lucide-react'
+import { LayoutDashboard, ListTodo, Heart, User, LogOut, Search, Plus } from 'lucide-react'
 import './DashboardLayout.css'
 
 function DashboardLayout({ children }) {
@@ -51,6 +51,10 @@ function DashboardLayout({ children }) {
             <NavLink to="/dashboard/causes" className={({ isActive }) => `dash-sidebar-link ${isActive ? 'active' : ''}`}>
               <Heart size={20} />
               <span>My Causes</span>
+            </NavLink>
+            <NavLink to="/causes/create" className={({ isActive }) => `dash-sidebar-link ${isActive ? 'active' : ''}`}>
+              <Plus size={20} />
+              <span>Create Cause</span>
             </NavLink>
             <NavLink to="/explore" className={({ isActive }) => `dash-sidebar-link ${isActive ? 'active' : ''}`}>
               <Search size={20} />

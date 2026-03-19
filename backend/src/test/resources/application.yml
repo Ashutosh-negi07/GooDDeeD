@@ -1,41 +1,22 @@
-#spring:
-#  datasource:
-#    url: jdbc:postgresql://localhost:5432/gooddeeds_backbone
-#    username: postgres
-#    password: postgres
-#    driver-class-name: org.postgresql.Driver
-#
-#  jpa:
-#    hibernate:
-#      ddl-auto: validate
-#    show-sql: true
-#    properties:
-#      hibernate:
-#        dialect: org.hibernate.dialect.PostgreSQLDialect
-#  devtools:
-#    restart:
-#      enabled: false
-
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/gooddeeds_backbone
-    username: blue
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
     password:
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 30000
+    driver-class-name: org.h2.Driver
 
   jpa:
     hibernate:
-      ddl-auto: validate
-    show-sql: true
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
 
-  devtools:
-    restart:
+  h2:
+    console:
       enabled: false
 
 jwt:
-  secret: TEST_SECRET_KEY_FOR_UNIT_TESTS_ONLY_1234567890
+  secret: TEST_JWT_SECRET_KEY_WITH_AT_LEAST_32_CHARACTERS_FOR_PROPER_TESTING
   expiration: 86400000

@@ -25,8 +25,8 @@ function ExploreCausesPage() {
         ? await causesAPI.search(keyword.trim(), page, size)
         : await causesAPI.getAll(page, size)
       setCauses(res.data.content)
-      setTotalPages(res.data.totalPages)
-      setTotalElements(res.data.totalElements)
+      setTotalPages(res.data.page?.totalPages ?? res.data.totalPages ?? 0)
+      setTotalElements(res.data.page?.totalElements ?? res.data.totalElements ?? 0)
     } catch {
       setCauses([])
     } finally {

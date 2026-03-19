@@ -2,6 +2,7 @@ package com.gooddeeds.backend.config;
 
 import com.gooddeeds.backend.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,10 +14,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -24,6 +27,10 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+
+    // Comma-separated list of allowed origins, e.g. "http://localhost:5173,https://yourdomain.com"
+    @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:5174,http://localhost:3000}")
+    private String allowedOrigins;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -41,21 +48,17 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allowed origins (frontend URLs)
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173",    // Vite default
-                "http://localhost:5174",    // Vite fallback
-                "http://localhost:5175",    // Vite fallback
-                "http://localhost:3000",    // React default
-                "http://localhost:4200"     // Angular default
-        ));
+        // Read allowed origins from env — supports both dev (localhost) and production domains
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
+        configuration.setAllowedOrigins(origins);
 
-        // Allowed HTTP methods
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
         ));
 
-        // Allowed headers
         configuration.setAllowedHeaders(List.of(
                 "Authorization",
                 "Content-Type",
@@ -64,15 +67,11 @@ public class SecurityConfig {
                 "Origin"
         ));
 
-        // Allow credentials (cookies, authorization headers)
         configuration.setAllowCredentials(true);
-
-        // How long browser caches preflight response (1 hour)
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);
-
         return source;
     }
 
@@ -85,24 +84,46 @@ public class SecurityConfig {
                 .sessionManagement(sm ->
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                // Security headers
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.deny())
+                        .contentTypeOptions(cto -> {})
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000)
+                        )
+                        .referrerPolicy(rp -> rp
+                                .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                        )
+                        // CSP omitted — this is a pure REST API, not an HTML server.
+                        // A CSP with connect-src 'self' would block cross-origin calls from the Vercel frontend.
+                )
                 .authorizeHttpRequests(auth -> auth
 
-                        //Public authentication endpoints (login, register)
+                        // Public authentication endpoints
                         .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
 
-                        //Health check endpoint
+                        // Health check endpoint
                         .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
 
-                        //Public GET: browse/search causes & goals (but NOT /my endpoints)
+                        // Protected: /causes/my and /tasks/my must be authenticated
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/causes/my",
+                                "/api/tasks/my",
+                                "/api/tasks/my/statistics"
+                        ).authenticated()
+
+                        // Public GET: browse/search causes & goals (but NOT /my endpoints)
                         .requestMatchers(HttpMethod.GET,
                                 "/api/causes",
                                 "/api/causes/search",
-                                "/api/causes/{causeId}",
-                                "/api/goals/{goalId}",
-                                "/api/goals/cause/{causeId}"
+                                "/api/causes/*",
+                                "/api/goals/*",
+                                "/api/goals/cause/*"
                         ).permitAll()
 
-                        //Everything else requires authentication
+                        // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

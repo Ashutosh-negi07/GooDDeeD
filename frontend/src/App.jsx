@@ -24,6 +24,11 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/explore" element={<ExploreCausesPage />} />
+          <Route path="/causes/create" element={
+            <ProtectedRoute>
+              <CreateCausePage />
+            </ProtectedRoute>
+          } />
           <Route path="/causes/:id" element={<CauseDetailPage />} />
 
           {/* Protected routes */}
@@ -52,12 +57,6 @@ function App() {
               <ProfilePage />
             </ProtectedRoute>
           } />
-          <Route path="/causes/create" element={
-            <ProtectedRoute>
-              <CreateCausePage />
-            </ProtectedRoute>
-          } />
-
           {/* 404 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

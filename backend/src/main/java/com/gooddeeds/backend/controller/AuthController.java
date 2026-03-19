@@ -3,6 +3,7 @@ package com.gooddeeds.backend.controller;
 import com.gooddeeds.backend.dto.CreateUserRequest;
 import com.gooddeeds.backend.dto.LoginRequest;
 import com.gooddeeds.backend.dto.UserResponseDTO;
+import com.gooddeeds.backend.exception.ResourceNotFoundException;
 import com.gooddeeds.backend.mapper.UserMapper;
 import com.gooddeeds.backend.model.User;
 import com.gooddeeds.backend.repository.UserRepository;
@@ -72,6 +73,6 @@ public class AuthController {
 
                 return userRepository.findById(userId)
                                 .map(UserMapper::toDTO)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         }
 }

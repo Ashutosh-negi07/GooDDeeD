@@ -183,9 +183,9 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("""
                 SELECT new com.gooddeeds.backend.dto.TaskStatisticsDTO(
                     COUNT(t),
-                    SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMPLETED THEN 1 ELSE 0 END),
-                    SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.ONGOING THEN 1 ELSE 0 END),
-                    SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMING_UP THEN 1 ELSE 0 END)
+                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMPLETED THEN 1 ELSE 0 END), 0),
+                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.ONGOING THEN 1 ELSE 0 END), 0),
+                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMING_UP THEN 1 ELSE 0 END), 0)
                 )
                 FROM Task t
                 WHERE t.cause.id IN (
@@ -198,9 +198,9 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("""
                 SELECT new com.gooddeeds.backend.dto.TaskStatisticsDTO(
                     COUNT(t),
-                    SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMPLETED THEN 1 ELSE 0 END),
-                    SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.ONGOING THEN 1 ELSE 0 END),
-                    SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMING_UP THEN 1 ELSE 0 END)
+                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMPLETED THEN 1 ELSE 0 END), 0),
+                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.ONGOING THEN 1 ELSE 0 END), 0),
+                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMING_UP THEN 1 ELSE 0 END), 0)
                 )
                 FROM Task t
                 WHERE t.cause.id = :causeId
@@ -216,9 +216,9 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("""
                 SELECT new com.gooddeeds.backend.dto.TaskStatisticsDTO(
                     COUNT(t),
-                    SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMPLETED THEN 1 ELSE 0 END),
-                    SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.ONGOING THEN 1 ELSE 0 END),
-                    SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMING_UP THEN 1 ELSE 0 END)
+                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMPLETED THEN 1 ELSE 0 END), 0),
+                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.ONGOING THEN 1 ELSE 0 END), 0),
+                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMING_UP THEN 1 ELSE 0 END), 0)
                 )
                 FROM Task t
                 WHERE t.goal.id = :goalId

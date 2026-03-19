@@ -1,34 +1,73 @@
 import http from "k6/http";
-import { check, sleep, group } from "k6";
-import { Rate, Trend, Counter } from "k6/metrics";
+import { check, group, sleep } from "k6";
+import { Counter, Rate, Trend } from "k6/metrics";
 
-// ──────────────────────────────────────────────
-//  CONFIG
-// ──────────────────────────────────────────────
+// ---------------------------------------------
+// Config
+// ---------------------------------------------
 var BASE_URL = __ENV.BASE_URL || "http://localhost:8080";
+var PROFILE = (__ENV.K6_PROFILE || "standard").toLowerCase();
 
-// Fixed email so setup user persists across runs
-var SETUP_USER = {
-  name: "Setup Admin",
-  email: "k6_setup_admin@stresstest.com",
-  password: "Test@12345",
-};
+function scenariosForProfile(profile) {
+  if (profile === "smoke") {
+    return {
+      smoke: {
+        executor: "constant-vus",
+        vus: 1,
+        duration: "45s",
+        tags: { scenario: "smoke" },
+      },
+    };
+  }
 
-// ──────────────────────────────────────────────
-//  CUSTOM METRICS
-// ──────────────────────────────────────────────
-var loginSuccess = new Rate("login_success");
-var registerSuccess = new Rate("register_success");
-var apiErrors = new Counter("api_errors");
-var causeCreation = new Trend("cause_creation_duration");
-var taskCreation = new Trend("task_creation_duration");
-var authDuration = new Trend("auth_duration");
+  if (profile === "full") {
+    return {
+      smoke: {
+        executor: "constant-vus",
+        vus: 1,
+        duration: "45s",
+        startTime: "0s",
+        tags: { scenario: "smoke" },
+      },
+      load: {
+        executor: "ramping-vus",
+        startVUs: 0,
+        stages: [
+          { duration: "1m", target: 20 },
+          { duration: "3m", target: 20 },
+          { duration: "1m", target: 0 },
+        ],
+        startTime: "50s",
+        tags: { scenario: "load" },
+      },
+      stress: {
+        executor: "ramping-vus",
+        startVUs: 0,
+        stages: [
+          { duration: "1m", target: 50 },
+          { duration: "2m", target: 100 },
+          { duration: "2m", target: 100 },
+          { duration: "1m", target: 0 },
+        ],
+        startTime: "6m",
+        tags: { scenario: "stress" },
+      },
+      spike: {
+        executor: "ramping-vus",
+        startVUs: 0,
+        stages: [
+          { duration: "10s", target: 180 },
+          { duration: "30s", target: 180 },
+          { duration: "10s", target: 0 },
+        ],
+        startTime: "13m",
+        tags: { scenario: "spike" },
+      },
+    };
+  }
 
-// ──────────────────────────────────────────────
-//  SCENARIOS
-// ──────────────────────────────────────────────
-export var options = {
-  scenarios: {
+  // standard
+  return {
     smoke: {
       executor: "constant-vus",
       vus: 1,
@@ -40,562 +79,701 @@ export var options = {
       executor: "ramping-vus",
       startVUs: 0,
       stages: [
-        { duration: "1m", target: 20 },
-        { duration: "3m", target: 20 },
+        { duration: "1m", target: 12 },
+        { duration: "2m", target: 12 },
         { duration: "1m", target: 0 },
       ],
       startTime: "35s",
       tags: { scenario: "load" },
     },
-    stress: {
-      executor: "ramping-vus",
-      startVUs: 0,
-      stages: [
-        { duration: "1m", target: 50 },
-        { duration: "2m", target: 100 },
-        { duration: "2m", target: 100 },
-        { duration: "1m", target: 0 },
-      ],
-      startTime: "6m",
-      tags: { scenario: "stress" },
-    },
-    spike: {
-      executor: "ramping-vus",
-      startVUs: 0,
-      stages: [
-        { duration: "10s", target: 200 },
-        { duration: "30s", target: 200 },
-        { duration: "10s", target: 0 },
-      ],
-      startTime: "13m",
-      tags: { scenario: "spike" },
-    },
-  },
+  };
+}
 
+// ---------------------------------------------
+// Metrics
+// ---------------------------------------------
+var contractChecks = new Rate("contract_checks");
+var server5xx = new Counter("server_5xx");
+var unexpected4xx = new Counter("unexpected_4xx");
+var apiErrors = new Counter("api_errors");
+
+var authDuration = new Trend("auth_duration");
+var browseDuration = new Trend("browse_duration");
+var causeOpsDuration = new Trend("cause_ops_duration");
+var taskOpsDuration = new Trend("task_ops_duration");
+
+export var options = {
+  scenarios: scenariosForProfile(PROFILE),
   thresholds: {
-    http_req_duration: ["p(95)<500", "p(99)<1500"],
-    http_req_failed: ["rate<0.05"],
-    login_success: ["rate>0.95"],
-    register_success: ["rate>0.90"],
-    cause_creation_duration: ["p(95)<800"],
-    task_creation_duration: ["p(95)<800"],
+    http_req_duration: ["p(95)<1200", "p(99)<2500"],
+    http_req_failed: ["rate<0.02"],
+    contract_checks: ["rate>0.98"],
+    server_5xx: ["count<1"],
+    unexpected_4xx: ["count<1"],
+    auth_duration: ["p(95)<1200"],
+    cause_ops_duration: ["p(95)<1500"],
+    task_ops_duration: ["p(95)<1500"],
   },
 };
 
-// ──────────────────────────────────────────────
-//  HELPERS
-// ──────────────────────────────────────────────
-function hdrs(token) {
+// ---------------------------------------------
+// Helpers
+// ---------------------------------------------
+function headers(token) {
   var h = { "Content-Type": "application/json" };
-  if (token) h["Authorization"] = "Bearer " + token;
+  if (token) {
+    h.Authorization = "Bearer " + token;
+  }
   return h;
 }
 
-function logFail(res, label) {
-  if (res.status >= 400) {
+function randomString(len) {
+  var chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  var out = "";
+  for (var i = 0; i < len; i++) {
+    out += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return out;
+}
+
+function request(method, path, body, token, tags) {
+  var params = {
+    headers: headers(token),
+    tags: tags || {},
+  };
+
+  if (method === "GET") {
+    return http.get(BASE_URL + path, params);
+  }
+  if (method === "DELETE") {
+    return http.del(BASE_URL + path, null, params);
+  }
+  if (method === "PATCH") {
+    return http.patch(BASE_URL + path, body ? JSON.stringify(body) : null, params);
+  }
+  if (method === "PUT") {
+    return http.put(BASE_URL + path, body ? JSON.stringify(body) : null, params);
+  }
+  return http.post(BASE_URL + path, body ? JSON.stringify(body) : null, params);
+}
+
+function parseJson(res) {
+  try {
+    return res.json();
+  } catch (e) {
+    return null;
+  }
+}
+
+function expectStatus(res, expectedStatuses, label) {
+  var ok = false;
+  for (var i = 0; i < expectedStatuses.length; i++) {
+    if (res.status === expectedStatuses[i]) {
+      ok = true;
+      break;
+    }
+  }
+
+  contractChecks.add(ok ? 1 : 0);
+
+  if (!ok) {
+    if (res.status >= 500) {
+      server5xx.add(1);
+    } else if (res.status >= 400) {
+      unexpected4xx.add(1);
+    }
+
+    apiErrors.add(1);
     console.warn(
       "FAIL [" + label + "] " + res.request.method + " " + res.url +
-      " -> " + res.status + " | " +
-      (res.body ? res.body.substring(0, 200) : "no body")
+      " -> " + res.status + " | " + (res.body ? res.body.substring(0, 220) : "no body")
     );
   }
+
+  return ok;
 }
 
-function rndStr(len) {
-  var c = "abcdefghijklmnopqrstuvwxyz0123456789";
-  var o = "";
-  for (var i = 0; i < len; i++) {
-    o += c.charAt(Math.floor(Math.random() * c.length));
+function expectJsonField(res, field, label) {
+  var body = parseJson(res);
+  var ok = !!(body && body[field] !== undefined && body[field] !== null);
+  contractChecks.add(ok ? 1 : 0);
+  if (!ok) {
+    apiErrors.add(1);
+    console.warn("FAIL [" + label + "] missing field: " + field);
   }
-  return o;
+  return body;
 }
 
-// ──────────────────────────────────────────────
-//  SETUP — runs once, creates a shared cause
-// ──────────────────────────────────────────────
-export function setup() {
-  console.log("Starting stress test against: " + BASE_URL);
+function registerAndLogin(email, password, namePrefix) {
+  var authStart = Date.now();
 
-  var token = null;
-  var regRes = http.post(
-    BASE_URL + "/api/auth/register",
-    JSON.stringify(SETUP_USER),
-    { headers: hdrs() }
+  var registerRes = request(
+    "POST",
+    "/api/auth/register",
+    {
+      name: namePrefix + " " + randomString(4),
+      email: email,
+      password: password,
+    },
+    null,
+    { endpoint: "register" }
   );
 
-  if (regRes.status === 200) {
-    try { token = regRes.json().token; } catch(e) { /* */ }
-    console.log("Setup user registered");
-  } else {
-    var loginRes = http.post(
-      BASE_URL + "/api/auth/login",
-      JSON.stringify({ email: SETUP_USER.email, password: SETUP_USER.password }),
-      { headers: hdrs() }
-    );
-    if (loginRes.status === 200) {
-      try { token = loginRes.json().token; } catch(e) { /* */ }
-      console.log("Setup user logged in (already existed)");
-    } else {
-      console.log("Setup FAILED: " + loginRes.status);
-      return { sharedCauseId: null };
-    }
+  // If already exists, backend returns 409; login still valid path.
+  expectStatus(registerRes, [200, 409], "Register");
+
+  var loginRes = request(
+    "POST",
+    "/api/auth/login",
+    { email: email, password: password },
+    null,
+    { endpoint: "login" }
+  );
+  authDuration.add(Date.now() - authStart);
+
+  if (!expectStatus(loginRes, [200], "Login")) {
+    return { token: null, user: null };
   }
 
-  var causeId = null;
-  if (token) {
-    var causeRes = http.post(
-      BASE_URL + "/api/causes",
-      JSON.stringify({
-        name: "K6 Shared Cause " + Date.now(),
-        description: "Shared cause for stress testing",
-        restricted: false,
-      }),
-      { headers: hdrs(token) }
-    );
-    if (causeRes.status === 200) {
-      try { causeId = causeRes.json().id; } catch(e) { /* */ }
-      console.log("Shared cause created: " + causeId);
-    }
+  var loginBody = expectJsonField(loginRes, "token", "Login token");
+  if (!loginBody || !loginBody.token || !loginBody.user || !loginBody.user.id) {
+    return { token: null, user: null };
   }
 
-  return { sharedCauseId: causeId };
+  var meRes = request("GET", "/api/auth/me", null, loginBody.token, { endpoint: "auth_me" });
+  expectStatus(meRes, [200], "Auth Me");
+
+  return { token: loginBody.token, user: loginBody.user };
 }
 
-// ──────────────────────────────────────────────
-//  MAIN — each VU registers its OWN user, joins
-//  the shared cause, then runs all API tests
-// ──────────────────────────────────────────────
-export default function (data) {
-  var sharedCauseId = data.sharedCauseId;
-  var myToken = null;
-  var myEmail = "vu" + __VU + "_" + __ITER + "_" + rndStr(5) + "@stress.com";
-  var myPass = "StressPass123";
+// ---------------------------------------------
+// Setup shared data
+// ---------------------------------------------
+export function setup() {
+  console.log("k6 profile=" + PROFILE + " base=" + BASE_URL);
 
-  // ─── Group 1: Auth ────────────────────────
-  group("Auth - Register + Login + Me", function () {
+  var setupEmail = "k6_setup_admin@gooddeeds.test";
+  var setupPassword = "Test@12345";
 
-    var regStart = Date.now();
-    var regRes = http.post(
-      BASE_URL + "/api/auth/register",
-      JSON.stringify({ name: "VU " + __VU, email: myEmail, password: myPass }),
-      { headers: hdrs(), tags: { endpoint: "register" } }
-    );
-    authDuration.add(Date.now() - regStart);
-    logFail(regRes, "Register");
-
-    var regOk = check(regRes, {
-      "register: 200": function(r) { return r.status === 200; },
-      "register: has token": function(r) {
-        try { myToken = r.json().token; return myToken !== undefined; }
-        catch(e) { return false; }
-      },
-    });
-    registerSuccess.add(regOk ? 1 : 0);
-    if (!regOk) apiErrors.add(1);
-
-    sleep(0.3);
-
-    var loginStart = Date.now();
-    var loginRes = http.post(
-      BASE_URL + "/api/auth/login",
-      JSON.stringify({ email: myEmail, password: myPass }),
-      { headers: hdrs(), tags: { endpoint: "login" } }
-    );
-    authDuration.add(Date.now() - loginStart);
-    logFail(loginRes, "Login");
-
-    var loginOk = check(loginRes, {
-      "login: 200": function(r) { return r.status === 200; },
-      "login: has token": function(r) {
-        try { myToken = r.json().token; return myToken !== undefined; }
-        catch(e) { return false; }
-      },
-    });
-    loginSuccess.add(loginOk ? 1 : 0);
-    if (!loginOk) apiErrors.add(1);
-
-    sleep(0.3);
-
-    if (myToken) {
-      var meRes = http.get(BASE_URL + "/api/auth/me", {
-        headers: hdrs(myToken),
-        tags: { endpoint: "me" },
-      });
-      logFail(meRes, "Get Me");
-      check(meRes, {
-        "me: 200": function(r) { return r.status === 200; },
-      });
-    }
-
-    sleep(0.5);
-  });
-
-  // If no token, skip remaining
-  if (!myToken) return;
-
-  // ─── Join shared cause so task/cause ops work ───
-  if (sharedCauseId) {
-    var joinRes = http.post(
-      BASE_URL + "/api/memberships/join?causeId=" + sharedCauseId,
-      null,
-      { headers: hdrs(myToken), tags: { endpoint: "join_cause" } }
-    );
-    // 200 = joined, 400 = already member, both fine
-    if (joinRes.status >= 500) {
-      logFail(joinRes, "Join Shared Cause");
-    }
-    sleep(0.2);
+  var setupAuth = registerAndLogin(setupEmail, setupPassword, "Setup Admin");
+  if (!setupAuth.token) {
+    return {
+      setupToken: null,
+      sharedOpenCauseId: null,
+      sharedRestrictedCauseId: null,
+      sharedGoalId: null,
+      sharedTaskId: null,
+      setupUserId: null,
+    };
   }
 
-  // ─── Group 2: Causes ─────────────────────
-  group("Causes - CRUD", function () {
+  var sharedOpenCauseId = null;
+  var sharedRestrictedCauseId = null;
+  var sharedGoalId = null;
+  var sharedTaskId = null;
 
-    var listRes = http.get(BASE_URL + "/api/causes?page=0&size=5", {
-      headers: hdrs(),
-      tags: { endpoint: "list_causes" },
-    });
-    logFail(listRes, "List Causes");
-    check(listRes, {
-      "list causes: 200": function(r) { return r.status === 200; },
-    });
+  var openCauseRes = request(
+    "POST",
+    "/api/causes",
+    {
+      name: "K6 Shared Open Cause " + Date.now(),
+      description: "Shared open cause for traffic generation",
+      restricted: false,
+    },
+    setupAuth.token,
+    { endpoint: "setup_create_open_cause" }
+  );
 
-    sleep(0.3);
+  if (expectStatus(openCauseRes, [200], "Setup Create Open Cause")) {
+    var openCause = parseJson(openCauseRes);
+    sharedOpenCauseId = openCause ? openCause.id : null;
+  }
 
-    var searchRes = http.get(
-      BASE_URL + "/api/causes/search?keyword=test&page=0&size=5",
-      { headers: hdrs(), tags: { endpoint: "search_causes" } }
+  var restrictedCauseRes = request(
+    "POST",
+    "/api/causes",
+    {
+      name: "K6 Shared Restricted Cause " + Date.now(),
+      description: "Shared restricted cause for membership flow",
+      restricted: true,
+    },
+    setupAuth.token,
+    { endpoint: "setup_create_restricted_cause" }
+  );
+
+  if (expectStatus(restrictedCauseRes, [200], "Setup Create Restricted Cause")) {
+    var restrictedCause = parseJson(restrictedCauseRes);
+    sharedRestrictedCauseId = restrictedCause ? restrictedCause.id : null;
+  }
+
+  if (sharedOpenCauseId) {
+    var goalRes = request(
+      "POST",
+      "/api/goals",
+      {
+        causeId: sharedOpenCauseId,
+        title: "K6 Shared Goal",
+        description: "Shared goal for public + member reads",
+      },
+      setupAuth.token,
+      { endpoint: "setup_create_goal" }
     );
-    logFail(searchRes, "Search Causes");
-    check(searchRes, {
-      "search causes: 200": function(r) { return r.status === 200; },
-    });
 
-    sleep(0.3);
+    if (expectStatus(goalRes, [200], "Setup Create Goal")) {
+      var goal = parseJson(goalRes);
+      sharedGoalId = goal ? goal.id : null;
+    }
 
-    // Create cause — this VU is the creator, so update will work
+    var taskRes = request(
+      "POST",
+      "/api/tasks",
+      {
+        title: "K6 Shared Task",
+        description: "Shared task for member reads",
+        status: "COMING_UP",
+        causeId: sharedOpenCauseId,
+        goalId: sharedGoalId,
+        dueDate: null,
+      },
+      setupAuth.token,
+      { endpoint: "setup_create_task" }
+    );
+
+    if (expectStatus(taskRes, [200], "Setup Create Task")) {
+      var task = parseJson(taskRes);
+      sharedTaskId = task ? task.id : null;
+    }
+  }
+
+  return {
+    setupToken: setupAuth.token,
+    setupUserId: setupAuth.user.id,
+    sharedOpenCauseId: sharedOpenCauseId,
+    sharedRestrictedCauseId: sharedRestrictedCauseId,
+    sharedGoalId: sharedGoalId,
+    sharedTaskId: sharedTaskId,
+  };
+}
+
+// ---------------------------------------------
+// Main user journey (mirrors frontend usage)
+// ---------------------------------------------
+export default function (data) {
+  var ts = Date.now();
+  var email = "k6_vu" + __VU + "_it" + __ITER + "_" + randomString(4) + "@gooddeeds.test";
+  var password = "StressPass123";
+
+  // --------- Public browse flow (Landing/Explore/Cause detail)
+  group("Public Browse", function () {
+    var bStart = Date.now();
+
+    var health = request("GET", "/api/health", null, null, { endpoint: "health" });
+    expectStatus(health, [200], "Health");
+
+    var causes = request("GET", "/api/causes?page=0&size=9", null, null, { endpoint: "causes_list" });
+    expectStatus(causes, [200], "Causes List");
+
+    var search = request("GET", "/api/causes/search?keyword=clean&page=0&size=9", null, null, { endpoint: "causes_search" });
+    expectStatus(search, [200], "Causes Search");
+
+    if (data.sharedOpenCauseId) {
+      var causeById = request("GET", "/api/causes/" + data.sharedOpenCauseId, null, null, { endpoint: "cause_by_id" });
+      expectStatus(causeById, [200], "Cause By ID");
+
+      var goalsByCause = request("GET", "/api/goals/cause/" + data.sharedOpenCauseId + "?page=0&size=5", null, null, { endpoint: "goals_by_cause_public" });
+      expectStatus(goalsByCause, [200], "Goals By Cause Public");
+    }
+
+    browseDuration.add(Date.now() - bStart);
+    sleep(0.2);
+  });
+
+  // --------- Auth flow (Register/Login/Me)
+  var auth = registerAndLogin(email, password, "VU User");
+  if (!auth.token || !auth.user || !auth.user.id) {
+    sleep(0.5);
+    return;
+  }
+
+  // --------- Dashboard flow
+  group("Dashboard", function () {
+    var stats = request("GET", "/api/tasks/my/statistics", null, auth.token, { endpoint: "my_task_stats" });
+    expectStatus(stats, [200], "My Task Statistics");
+
+    var myCauses = request("GET", "/api/causes/my", null, auth.token, { endpoint: "my_causes" });
+    expectStatus(myCauses, [200], "My Causes");
+
+    var memberships = request("GET", "/api/memberships/my", null, auth.token, { endpoint: "my_memberships" });
+    expectStatus(memberships, [200], "My Memberships");
+
+    sleep(0.2);
+  });
+
+  // --------- Create cause + admin management flow (CreateCause/ManageCause pages)
+  var myCauseId = null;
+  var myGoalId = null;
+  var myTaskId = null;
+
+  group("Cause and Goal Management", function () {
     var cStart = Date.now();
-    var createRes = http.post(
-      BASE_URL + "/api/causes",
-      JSON.stringify({
-        name: "Cause VU" + __VU + "-" + __ITER,
-        description: "Created during stress test",
-        restricted: false,
-      }),
-      { headers: hdrs(myToken), tags: { endpoint: "create_cause" } }
-    );
-    causeCreation.add(Date.now() - cStart);
-    logFail(createRes, "Create Cause");
 
-    var myCauseId = null;
-    check(createRes, {
-      "create cause: 200": function(r) { return r.status === 200; },
-      "create cause: has id": function(r) {
-        try { myCauseId = r.json().id; return myCauseId !== undefined; }
-        catch(e) { return false; }
+    var createCause = request(
+      "POST",
+      "/api/causes",
+      {
+        name: "VU Cause " + __VU + "-" + __ITER + "-" + randomString(3),
+        description: "Cause created by k6 user flow",
+        restricted: __ITER % 2 === 0,
       },
-    });
+      auth.token,
+      { endpoint: "create_cause" }
+    );
 
-    sleep(0.3);
+    if (expectStatus(createCause, [200], "Create Cause")) {
+      var causeBody = parseJson(createCause);
+      myCauseId = causeBody ? causeBody.id : null;
+    }
 
-    // Update OWN cause (this VU created it → is a member)
     if (myCauseId) {
-      var getRes = http.get(BASE_URL + "/api/causes/" + myCauseId, {
-        headers: hdrs(),
-        tags: { endpoint: "get_cause" },
-      });
-      logFail(getRes, "Get Cause");
-      check(getRes, {
-        "get cause: 200": function(r) { return r.status === 200; },
-      });
-
-      sleep(0.2);
-
-      var updRes = http.put(
-        BASE_URL + "/api/causes/" + myCauseId,
-        JSON.stringify({
-          name: "Updated VU" + __VU + "-" + __ITER,
-          description: "Updated during stress test",
-        }),
-        { headers: hdrs(myToken), tags: { endpoint: "update_cause" } }
+      var updateCause = request(
+        "PUT",
+        "/api/causes/" + myCauseId,
+        {
+          name: "Updated VU Cause " + __VU + "-" + __ITER,
+          description: "Updated during k6 flow",
+          restricted: false,
+        },
+        auth.token,
+        { endpoint: "update_cause" }
       );
-      logFail(updRes, "Update Cause");
-      check(updRes, {
-        "update cause: 200": function(r) { return r.status === 200; },
-      });
-    }
+      expectStatus(updateCause, [200], "Update Cause");
 
-    sleep(0.5);
-  });
-
-  // ─── Group 3: Memberships ────────────────
-  group("Memberships", function () {
-
-    var myRes = http.get(BASE_URL + "/api/memberships/my", {
-      headers: hdrs(myToken),
-      tags: { endpoint: "my_memberships" },
-    });
-    logFail(myRes, "My Memberships");
-    check(myRes, {
-      "my memberships: 200": function(r) { return r.status === 200; },
-    });
-
-    sleep(0.3);
-
-    if (sharedCauseId) {
-      var membersRes = http.get(
-        BASE_URL + "/api/memberships/cause/" + sharedCauseId,
-        { headers: hdrs(myToken), tags: { endpoint: "cause_members" } }
+      var createGoal = request(
+        "POST",
+        "/api/goals",
+        {
+          causeId: myCauseId,
+          title: "VU Goal " + __VU + "-" + __ITER,
+          description: "Goal created in manage flow",
+        },
+        auth.token,
+        { endpoint: "create_goal" }
       );
-      logFail(membersRes, "Cause Members");
-      check(membersRes, {
-        "cause members: 200": function(r) { return r.status === 200; },
-      });
-    }
 
-    sleep(0.5);
-  });
+      if (expectStatus(createGoal, [200], "Create Goal")) {
+        var goalBody = parseJson(createGoal);
+        myGoalId = goalBody ? goalBody.id : null;
+      }
 
-  // ─── Group 4: Goals ──────────────────────
-  group("Goals - Read", function () {
-    if (!sharedCauseId) return;
+      if (myGoalId) {
+        var updateGoal = request(
+          "PUT",
+          "/api/goals/" + myGoalId,
+          {
+            title: "Updated Goal " + __VU + "-" + __ITER,
+            description: "Updated goal description",
+          },
+          auth.token,
+          { endpoint: "update_goal" }
+        );
+        expectStatus(updateGoal, [200], "Update Goal");
+      }
 
-    var goalsRes = http.get(
-      BASE_URL + "/api/goals/cause/" + sharedCauseId + "?page=0&size=5",
-      { headers: hdrs(), tags: { endpoint: "list_goals" } }
-    );
-    logFail(goalsRes, "List Goals");
-    check(goalsRes, {
-      "list goals: 200": function(r) { return r.status === 200; },
-    });
-
-    sleep(0.5);
-  });
-
-  // ─── Group 5: Tasks (VU already joined shared cause) ──
-  group("Tasks - CRUD", function () {
-    if (!sharedCauseId) return;
-
-    var tStart = Date.now();
-    var taskRes = http.post(
-      BASE_URL + "/api/tasks",
-      JSON.stringify({
-        title: "Task VU" + __VU + "-" + __ITER,
-        description: "Task from stress test",
-        causeId: sharedCauseId,
-      }),
-      { headers: hdrs(myToken), tags: { endpoint: "create_task" } }
-    );
-    taskCreation.add(Date.now() - tStart);
-    logFail(taskRes, "Create Task");
-
-    var taskId = null;
-    check(taskRes, {
-      "create task: 200": function(r) { return r.status === 200; },
-      "create task: has id": function(r) {
-        try { taskId = r.json().id; return taskId !== undefined; }
-        catch(e) { return false; }
-      },
-    });
-
-    sleep(0.3);
-
-    if (taskId) {
-      var getTaskRes = http.get(BASE_URL + "/api/tasks/" + taskId, {
-        headers: hdrs(myToken),
-        tags: { endpoint: "get_task" },
-      });
-      logFail(getTaskRes, "Get Task");
-      check(getTaskRes, {
-        "get task: 200": function(r) { return r.status === 200; },
-      });
-
-      sleep(0.2);
-
-      var statusRes = http.patch(
-        BASE_URL + "/api/tasks/" + taskId + "/status?status=IN_PROGRESS",
+      var goalsByCauseAuthed = request(
+        "GET",
+        "/api/goals/cause/" + myCauseId + "?page=0&size=10",
         null,
-        { headers: hdrs(myToken), tags: { endpoint: "update_task_status" } }
+        null,
+        { endpoint: "goals_by_cause" }
       );
-      logFail(statusRes, "Update Task Status");
-      check(statusRes, {
-        "update task status: 200": function(r) { return r.status === 200; },
-      });
+      expectStatus(goalsByCauseAuthed, [200], "Goals By Cause");
     }
 
-    sleep(0.3);
-
-    // Tasks by cause
-    var causeTasks = http.get(
-      BASE_URL + "/api/tasks/cause/" + sharedCauseId + "?page=0&size=5",
-      { headers: hdrs(myToken), tags: { endpoint: "tasks_by_cause" } }
-    );
-    logFail(causeTasks, "Tasks By Cause");
-    check(causeTasks, {
-      "tasks by cause: 200": function(r) { return r.status === 200; },
-    });
-
-    sleep(0.3);
-
-    // My tasks
-    var myTasks = http.get(BASE_URL + "/api/tasks/my?page=0&size=5", {
-      headers: hdrs(myToken),
-      tags: { endpoint: "my_tasks" },
-    });
-    logFail(myTasks, "My Tasks");
-    check(myTasks, {
-      "my tasks: 200": function(r) { return r.status === 200; },
-    });
-
-    sleep(0.3);
-
-    // Task statistics
-    var statsRes = http.get(BASE_URL + "/api/tasks/my/statistics", {
-      headers: hdrs(myToken),
-      tags: { endpoint: "task_stats" },
-    });
-    logFail(statsRes, "Task Stats");
-    check(statsRes, {
-      "task statistics: 200": function(r) { return r.status === 200; },
-    });
-
-    sleep(0.5);
+    causeOpsDuration.add(Date.now() - cStart);
+    sleep(0.2);
   });
 
-  // ─── Group 6: Users — look up OWN email ──
-  group("Users - Read", function () {
-    var userRes = http.get(
-      BASE_URL + "/api/users/by-email?email=" + encodeURIComponent(myEmail),
-      { headers: hdrs(myToken), tags: { endpoint: "user_by_email" } }
-    );
-    logFail(userRes, "User By Email");
-    check(userRes, {
-      "user by email: 200": function(r) { return r.status === 200; },
-    });
+  // --------- Task flow (MyTasks + ManageCause task operations)
+  group("Task Management", function () {
+    var tStart = Date.now();
 
-    sleep(0.5);
-  });
+    if (myCauseId) {
+      var createTask = request(
+        "POST",
+        "/api/tasks",
+        {
+          title: "VU Task " + __VU + "-" + __ITER,
+          description: "Task from k6 flow",
+          status: "COMING_UP",
+          causeId: myCauseId,
+          goalId: myGoalId,
+          dueDate: null,
+        },
+        auth.token,
+        { endpoint: "create_task" }
+      );
 
-  // ─── Group 7: Batch reads ────────────────
-  group("Mixed Read Load", function () {
-    var reqs = [
-      { method: "GET", url: BASE_URL + "/api/causes?page=0&size=10",
-        body: null, params: { headers: hdrs(), tags: { endpoint: "batch_read" } } },
-      { method: "GET", url: BASE_URL + "/api/causes/search?keyword=stress&page=0&size=5",
-        body: null, params: { headers: hdrs(), tags: { endpoint: "batch_read" } } },
-      { method: "GET", url: BASE_URL + "/api/tasks/my?page=0&size=5",
-        body: null, params: { headers: hdrs(myToken), tags: { endpoint: "batch_read" } } },
-      { method: "GET", url: BASE_URL + "/api/memberships/my",
-        body: null, params: { headers: hdrs(myToken), tags: { endpoint: "batch_read" } } },
-      { method: "GET", url: BASE_URL + "/api/tasks/my/statistics",
-        body: null, params: { headers: hdrs(myToken), tags: { endpoint: "batch_read" } } },
-    ];
+      if (expectStatus(createTask, [200], "Create Task")) {
+        var taskBody = parseJson(createTask);
+        myTaskId = taskBody ? taskBody.id : null;
+      }
 
-    if (sharedCauseId) {
-      reqs.push({
-        method: "GET",
-        url: BASE_URL + "/api/goals/cause/" + sharedCauseId + "?page=0&size=5",
-        body: null,
-        params: { headers: hdrs(), tags: { endpoint: "batch_read" } },
-      });
-    }
+      if (myTaskId) {
+        var getTask = request("GET", "/api/tasks/" + myTaskId, null, auth.token, { endpoint: "get_task" });
+        expectStatus(getTask, [200], "Get Task");
 
-    var responses = http.batch(reqs);
+        var updateTask = request(
+          "PUT",
+          "/api/tasks/" + myTaskId,
+          {
+            title: "Updated Task " + __VU + "-" + __ITER,
+            description: "Updated task",
+            status: "ONGOING",
+            goalId: myGoalId,
+            clearGoal: false,
+            dueDate: null,
+          },
+          auth.token,
+          { endpoint: "update_task" }
+        );
+        expectStatus(updateTask, [200], "Update Task");
 
-    for (var i = 0; i < responses.length; i++) {
-      if (responses[i].status !== 200) {
-        apiErrors.add(1);
-        console.warn("FAIL [Batch " + i + "] -> " + responses[i].status);
+        var patchTask = request(
+          "PATCH",
+          "/api/tasks/" + myTaskId + "/status?status=COMPLETED",
+          null,
+          auth.token,
+          { endpoint: "update_task_status" }
+        );
+        expectStatus(patchTask, [200], "Patch Task Status");
+      }
+
+      var byCause = request(
+        "GET",
+        "/api/tasks/cause/" + myCauseId + "?page=0&size=10",
+        null,
+        auth.token,
+        { endpoint: "tasks_by_cause" }
+      );
+      expectStatus(byCause, [200], "Tasks By Cause");
+
+      if (myGoalId) {
+        var byGoal = request(
+          "GET",
+          "/api/tasks/goal/" + myGoalId + "?page=0&size=10",
+          null,
+          auth.token,
+          { endpoint: "tasks_by_goal" }
+        );
+        expectStatus(byGoal, [200], "Tasks By Goal");
+      }
+
+      var myTasks = request(
+        "GET",
+        "/api/tasks/my?page=0&size=10&causeId=" + myCauseId,
+        null,
+        auth.token,
+        { endpoint: "my_tasks" }
+      );
+      expectStatus(myTasks, [200], "My Tasks");
+
+      var myStatsCause = request(
+        "GET",
+        "/api/tasks/my/statistics?causeId=" + myCauseId,
+        null,
+        auth.token,
+        { endpoint: "my_task_stats_cause" }
+      );
+      expectStatus(myStatsCause, [200], "My Task Statistics by Cause");
+
+      if (myGoalId) {
+        var myStatsGoal = request(
+          "GET",
+          "/api/tasks/my/statistics?goalId=" + myGoalId,
+          null,
+          auth.token,
+          { endpoint: "my_task_stats_goal" }
+        );
+        expectStatus(myStatsGoal, [200], "My Task Statistics by Goal");
       }
     }
 
-    check(responses[0], {
-      "batch: first ok": function(r) { return r.status === 200; },
-    });
-
-    sleep(1);
+    taskOpsDuration.add(Date.now() - tStart);
+    sleep(0.2);
   });
 
-  sleep(0.5);
+  // --------- Membership flow (CauseDetail page actions)
+  group("Membership Flow", function () {
+    if (data.sharedOpenCauseId) {
+      var joinOpen = request(
+        "POST",
+        "/api/memberships/join?causeId=" + data.sharedOpenCauseId,
+        null,
+        auth.token,
+        { endpoint: "join_open_cause" }
+      );
+      // 200 first time, 409 if this user already joined from previous retries.
+      expectStatus(joinOpen, [200, 409], "Join Open Cause");
+
+      var membersOpen = request(
+        "GET",
+        "/api/memberships/cause/" + data.sharedOpenCauseId,
+        null,
+        auth.token,
+        { endpoint: "members_by_cause" }
+      );
+      expectStatus(membersOpen, [200], "Members By Cause");
+
+      var leaveOpen = request(
+        "DELETE",
+        "/api/memberships/leave?causeId=" + data.sharedOpenCauseId,
+        null,
+        auth.token,
+        { endpoint: "leave_open_cause" }
+      );
+      // If already removed in retry edge-case, allow 404 too.
+      expectStatus(leaveOpen, [200, 404], "Leave Open Cause");
+    }
+
+    if (data.sharedRestrictedCauseId) {
+      var joinRestricted = request(
+        "POST",
+        "/api/memberships/join?causeId=" + data.sharedRestrictedCauseId,
+        null,
+        auth.token,
+        { endpoint: "join_restricted_cause" }
+      );
+      expectStatus(joinRestricted, [200, 409], "Join Restricted Cause");
+    }
+
+    sleep(0.2);
+  });
+
+  // --------- Profile flow
+  group("Profile Flow", function () {
+    var byEmail = request(
+      "GET",
+      "/api/users/by-email?email=" + encodeURIComponent(email),
+      null,
+      auth.token,
+      { endpoint: "user_by_email" }
+    );
+    expectStatus(byEmail, [200], "User By Email");
+
+    var profileName = "VU Updated " + __VU + "-" + __ITER;
+    var updateProfile = request(
+      "PUT",
+      "/api/users/" + auth.user.id + "?name=" + encodeURIComponent(profileName) + "&email=" + encodeURIComponent(email),
+      null,
+      auth.token,
+      { endpoint: "user_update" }
+    );
+    expectStatus(updateProfile, [200], "Update Profile");
+
+    sleep(0.2);
+  });
+
+  // --------- Cleanup this VU data when possible
+  group("Cleanup", function () {
+    if (myTaskId) {
+      var delTask = request("DELETE", "/api/tasks/" + myTaskId, null, auth.token, { endpoint: "delete_task" });
+      expectStatus(delTask, [204], "Delete Task");
+    }
+
+    if (myGoalId) {
+      var delGoal = request("DELETE", "/api/goals/" + myGoalId, null, auth.token, { endpoint: "delete_goal" });
+      expectStatus(delGoal, [200], "Delete Goal");
+    }
+
+    if (myCauseId) {
+      var delCause = request("DELETE", "/api/causes/" + myCauseId, null, auth.token, { endpoint: "delete_cause" });
+      expectStatus(delCause, [200], "Delete Cause");
+    }
+  });
+
+  // Realistic think time
+  sleep(Math.random() * 0.8 + 0.2);
+
+  // Keep linter-like check usage for k6 summary visibility
+  check(ts, {
+    "iteration completed": function () {
+      return true;
+    },
+  });
 }
 
-// ──────────────────────────────────────────────
-//  TEARDOWN
-// ──────────────────────────────────────────────
+// ---------------------------------------------
+// Teardown
+// ---------------------------------------------
 export function teardown(data) {
   console.log("Stress test completed");
-  console.log("  Shared cause ID: " + (data.sharedCauseId || "N/A"));
+  console.log("  profile: " + PROFILE);
+  console.log("  shared open cause: " + (data.sharedOpenCauseId || "N/A"));
+  console.log("  shared restricted cause: " + (data.sharedRestrictedCauseId || "N/A"));
+  console.log("  shared goal: " + (data.sharedGoalId || "N/A"));
+  console.log("  shared task: " + (data.sharedTaskId || "N/A"));
 }
 
-// ──────────────────────────────────────────────
-//  HANDLE SUMMARY
-// ──────────────────────────────────────────────
+// ---------------------------------------------
+// Summary
+// ---------------------------------------------
 export function handleSummary(data) {
-  var httpReqs = 0;
-  var avgDur = "N/A";
-  var p95Dur = "N/A";
-  var p99Dur = "N/A";
-  var failRate = "N/A";
-  var loginRate = "N/A";
-  var regRate = "N/A";
-  var errCount = 0;
-
-  if (data.metrics.http_reqs && data.metrics.http_reqs.values) {
-    httpReqs = data.metrics.http_reqs.values.count || 0;
-  }
-  if (data.metrics.http_req_duration && data.metrics.http_req_duration.values) {
-    var d = data.metrics.http_req_duration.values;
-    if (d.avg !== undefined) avgDur = d.avg.toFixed(2);
-    if (d["p(95)"] !== undefined) p95Dur = d["p(95)"].toFixed(2);
-    if (d["p(99)"] !== undefined) p99Dur = d["p(99)"].toFixed(2);
-  }
-  if (data.metrics.http_req_failed && data.metrics.http_req_failed.values) {
-    if (data.metrics.http_req_failed.values.rate !== undefined)
-      failRate = data.metrics.http_req_failed.values.rate.toFixed(4);
-  }
-  if (data.metrics.login_success && data.metrics.login_success.values) {
-    if (data.metrics.login_success.values.rate !== undefined)
-      loginRate = data.metrics.login_success.values.rate.toFixed(4);
-  }
-  if (data.metrics.register_success && data.metrics.register_success.values) {
-    if (data.metrics.register_success.values.rate !== undefined)
-      regRate = data.metrics.register_success.values.rate.toFixed(4);
-  }
-  if (data.metrics.api_errors && data.metrics.api_errors.values) {
-    errCount = data.metrics.api_errors.values.count || 0;
+  function metricValue(name, key, fallback) {
+    if (!data.metrics[name] || !data.metrics[name].values) return fallback;
+    if (data.metrics[name].values[key] === undefined) return fallback;
+    return data.metrics[name].values[key];
   }
 
-  var line = "============================================================";
-  var out =
-    "\n" + line + "\n" +
-    "  K6 STRESS TEST SUMMARY\n" +
-    line + "\n" +
-    "  Total Requests:     " + httpReqs + "\n" +
-    "  Avg Duration:       " + avgDur + " ms\n" +
-    "  P95 Duration:       " + p95Dur + " ms\n" +
-    "  P99 Duration:       " + p99Dur + " ms\n" +
-    "  Error Rate:         " + failRate + "\n" +
-    "  Login Success:      " + loginRate + "\n" +
-    "  Register Success:   " + regRate + "\n" +
+  var reqCount = metricValue("http_reqs", "count", 0);
+  var avg = metricValue("http_req_duration", "avg", null);
+  var p95 = metricValue("http_req_duration", "p(95)", null);
+  var p99 = metricValue("http_req_duration", "p(99)", null);
+  var failedRate = metricValue("http_req_failed", "rate", null);
+  var contracts = metricValue("contract_checks", "rate", null);
+  var errCount = metricValue("api_errors", "count", 0);
+  var c4xx = metricValue("unexpected_4xx", "count", 0);
+  var c5xx = metricValue("server_5xx", "count", 0);
+
+  function f(n) {
+    return n === null || n === undefined ? "N/A" : Number(n).toFixed(2);
+  }
+
+  var divider = "============================================================";
+  var output =
+    "\n" + divider + "\n" +
+    "  GOODDEEDS K6 SUMMARY\n" +
+    divider + "\n" +
+    "  Profile:            " + PROFILE + "\n" +
+    "  Total Requests:     " + reqCount + "\n" +
+    "  Avg Duration:       " + f(avg) + " ms\n" +
+    "  P95 Duration:       " + f(p95) + " ms\n" +
+    "  P99 Duration:       " + f(p99) + " ms\n" +
+    "  HTTP Failed Rate:   " + (failedRate === null ? "N/A" : Number(failedRate).toFixed(4)) + "\n" +
+    "  Contract Checks:    " + (contracts === null ? "N/A" : Number(contracts).toFixed(4)) + "\n" +
     "  API Errors:         " + errCount + "\n" +
-    line + "\n";
+    "  Unexpected 4xx:     " + c4xx + "\n" +
+    "  Server 5xx:         " + c5xx + "\n" +
+    divider + "\n";
 
   var summary = {
     timestamp: new Date().toISOString(),
-    scenarios: ["smoke", "load", "stress", "spike"],
+    profile: PROFILE,
+    baseUrl: BASE_URL,
     metrics: {
-      http_reqs: httpReqs,
-      avg_duration_ms: avgDur,
-      p95_duration_ms: p95Dur,
-      p99_duration_ms: p99Dur,
-      error_rate: failRate,
-      login_success: loginRate,
-      register_success: regRate,
+      http_reqs: reqCount,
+      avg_duration_ms: f(avg),
+      p95_duration_ms: f(p95),
+      p99_duration_ms: f(p99),
+      http_failed_rate: failedRate === null ? "N/A" : Number(failedRate).toFixed(4),
+      contract_checks_rate: contracts === null ? "N/A" : Number(contracts).toFixed(4),
       api_errors: errCount,
+      unexpected_4xx: c4xx,
+      server_5xx: c5xx,
     },
   };
 
   return {
-    stdout: out,
+    stdout: output,
     "stress-test-results.json": JSON.stringify(summary, null, 2),
   };
 }

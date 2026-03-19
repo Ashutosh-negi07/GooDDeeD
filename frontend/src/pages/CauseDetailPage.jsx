@@ -9,6 +9,10 @@ import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
+import causeTeaching from '../assets/cause-teaching.png'
+import causeCleanup from '../assets/cause-cleanup.png'
+import causeTrees from '../assets/cause-trees.png'
+import heroVolunteers from '../assets/hero-volunteers.png'
 import './CauseDetailPage.css'
 
 function CauseDetailPage() {
@@ -92,43 +96,56 @@ function CauseDetailPage() {
   const isAdmin = membership?.role === 'ADMIN'
   const isMember = membership?.approved === true
 
+  const goalText = goals
+    .map(goal => `${goal.title || ''} ${goal.description || ''}`)
+    .join(' ')
+    .toLowerCase()
+  const causeText = `${cause?.name || ''} ${cause?.description || ''}`.toLowerCase()
+  const matchText = `${causeText} ${goalText}`
+
+  const hasKeyword = (keywords) => keywords.some(keyword => matchText.includes(keyword))
+
+  let headerImage = heroVolunteers
+  if (hasKeyword(['teach', 'education', 'school', 'student', 'literacy', 'mentor', 'tutor'])) {
+    headerImage = causeTeaching
+  } else if (hasKeyword(['cleanup', 'clean', 'beach', 'ocean', 'plastic', 'waste', 'recycle'])) {
+    headerImage = causeCleanup
+  } else if (hasKeyword(['tree', 'forest', 'plant', 'green', 'climate', 'nature', 'environment'])) {
+    headerImage = causeTrees
+  }
+
+  const headerStyle = {
+    backgroundImage: `linear-gradient(135deg, rgba(26, 95, 64, 0.82) 0%, rgba(16, 61, 41, 0.82) 100%), url(${headerImage})`,
+  }
+
   const statusColors = {
     COMING_UP: { bg: 'rgba(245, 158, 11, 0.1)', color: '#D97706', label: 'Coming Up' },
     ONGOING: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', label: 'Ongoing' },
     COMPLETED: { bg: 'rgba(16, 185, 129, 0.1)', color: '#059669', label: 'Completed' },
   }
 
-  if (loading) {
-    return (
-      <div className="cause-detail-page">
-        <Navbar />
-        <div className="cause-detail-loading">
-          <div className="explore-spinner"></div>
-          <p>Loading cause...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!cause) {
-    return (
-      <div className="cause-detail-page">
-        <Navbar />
-        <div className="cause-detail-loading">
-          <h2>Cause not found</h2>
-          <Link to="/explore" className="btn btn-primary">Back to Explore</Link>
-        </div>
-        <Footer />
-      </div>
-    )
-  }
-
   return (
     <div className="cause-detail-page">
       <Navbar />
 
+      {loading ? (
+        <div className="cause-detail-loading">
+          <div className="explore-spinner"></div>
+          <p>Loading cause...</p>
+        </div>
+      ) : !cause ? (
+        <>
+          <div className="cause-detail-loading">
+            <h2>Cause not found</h2>
+            <Link to="/explore" className="btn btn-primary">Back to Explore</Link>
+          </div>
+          <Footer />
+        </>
+      ) : (
+        <>
+
       {/* Header */}
-      <section className="cd-header">
+      <section className="cd-header" style={headerStyle}>
         <div className="container">
           <Link to="/explore" className="cd-back">
             <ArrowLeft size={18} /> Back to Explore
@@ -362,6 +379,8 @@ function CauseDetailPage() {
       </section>
 
       <Footer />
+        </>
+      )}
     </div>
   )
 }

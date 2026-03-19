@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import './Navbar.css'
 
 function Navbar() {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
 
   return (
     <nav className="navbar" id="navbar">
@@ -22,7 +23,7 @@ function Navbar() {
           {user ? (
             <>
               <Link to="/dashboard" className="navbar-login">Dashboard</Link>
-              <button onClick={logout} className="btn btn-primary navbar-register">Logout</button>
+              <button onClick={() => { logout(); navigate('/') }} className="btn btn-primary navbar-register">Logout</button>
             </>
           ) : (
             <>
@@ -33,8 +34,8 @@ function Navbar() {
         </div>
 
         <button className="navbar-toggle" aria-label="Toggle menu" onClick={() => {
-          document.querySelector('.nav-shared .navbar-links')?.classList.toggle('open')
-          document.querySelector('.nav-shared .navbar-actions')?.classList.toggle('open')
+          document.querySelector('.navbar-links')?.classList.toggle('open')
+          document.querySelector('.navbar-actions')?.classList.toggle('open')
         }}>
           <span></span>
           <span></span>

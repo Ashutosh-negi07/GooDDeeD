@@ -32,7 +32,7 @@ function MyTasksPage() {
       if (causeFilter) params.causeId = causeFilter
       const res = await tasksAPI.getMyTasks(params)
       setTasks(res.data.content || [])
-      setTotalPages(res.data.totalPages || 0)
+      setTotalPages(res.data.page?.totalPages ?? res.data.totalPages ?? 0)
     } catch {
       setTasks([])
     } finally {

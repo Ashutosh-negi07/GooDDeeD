@@ -19,6 +19,7 @@ function ManageCausePage() {
   const [goals, setGoals] = useState([])
   const [tasks, setTasks] = useState([])
   const [members, setMembers] = useState([])
+  const [hasAccess, setHasAccess] = useState(true)
   const [loading, setLoading] = useState(true)
   const [activeSection, setActiveSection] = useState('details')
 
@@ -48,6 +49,18 @@ function ManageCausePage() {
   async function fetchAll() {
     setLoading(true)
     try {
+      const myMembershipsRes = await membershipsAPI.getMy()
+      const myMembership = myMembershipsRes.data.find(m => m.causeId === id)
+
+      if (!myMembership || myMembership.role !== 'ADMIN' || !myMembership.approved) {
+        setHasAccess(false)
+        toast.error('Only approved admins can manage this cause')
+        navigate(`/causes/${id}`)
+        return
+      }
+
+      setHasAccess(true)
+
       const [causeRes, goalsRes, tasksRes, membersRes] = await Promise.all([
         causesAPI.getById(id),
         goalsAPI.getByCause(id, 0, 100),
@@ -209,6 +222,10 @@ function ManageCausePage() {
         </div>
       </DashboardLayout>
     )
+  }
+
+  if (!hasAccess) {
+    return null
   }
 
   return (

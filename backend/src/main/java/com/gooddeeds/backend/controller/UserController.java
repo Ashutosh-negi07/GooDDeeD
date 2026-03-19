@@ -2,6 +2,7 @@ package com.gooddeeds.backend.controller;
 
 import com.gooddeeds.backend.dto.CreateUserRequest;
 import com.gooddeeds.backend.dto.UserResponseDTO;
+import com.gooddeeds.backend.exception.ResourceNotFoundException;
 import com.gooddeeds.backend.mapper.UserMapper;
 import com.gooddeeds.backend.security.SecurityUtils;
 import com.gooddeeds.backend.service.UserService;
@@ -27,26 +28,26 @@ public class UserController {
 
     // Get user by ID
     @GetMapping("/{id}")
-    public UserResponseDTO getUserById(@PathVariable UUID id) {
+    public UserResponseDTO getUserById(@PathVariable("id") UUID id) {
         return userService.getUserById(id)
                 .map(UserMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     // Get user by email
     @GetMapping("/by-email")
-    public UserResponseDTO getUserByEmail(@RequestParam String email) {
+    public UserResponseDTO getUserByEmail(@RequestParam("email") String email) {
         return userService.getUserByEmail(email)
                 .map(UserMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     // Update user
     @PutMapping("/{id}")
     public UserResponseDTO updateUser(
-            @PathVariable UUID id,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String email) {
+            @PathVariable("id") UUID id,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "email", required = false) String email) {
         UUID authenticatedUserId = SecurityUtils.getCurrentUserId();
         return UserMapper.toDTO(
                 userService.updateUser(authenticatedUserId, id, name, email));
@@ -54,7 +55,7 @@ public class UserController {
 
     // Delete user
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable UUID id) {
+    public void deleteUser(@PathVariable("id") UUID id) {
         UUID authenticatedUserId = SecurityUtils.getCurrentUserId();
         userService.deleteUser(authenticatedUserId, id);
     }
