@@ -31,6 +31,7 @@ jobs:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: false
+      SPRING_FLYWAY_ENABLED: false
 
     steps:
       - name: Checkout
