@@ -27,12 +27,16 @@ CREATE TABLE IF NOT EXISTS goals (
 );
 
 -- Create task_status enum
-CREATE TYPE IF NOT EXISTS task_status AS ENUM (
-    'COMING_UP',
-    'IN_PROGRESS',
-    'COMPLETED',
-    'CANCELLED'
-);
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'task_status') THEN
+        CREATE TYPE task_status AS ENUM (
+            'COMING_UP',
+            'IN_PROGRESS',
+            'COMPLETED',
+            'CANCELLED'
+        );
+    END IF;
+END $$;
 
 -- Create tasks table
 CREATE TABLE IF NOT EXISTS tasks (
@@ -47,11 +51,15 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
 
 -- Create role enum
-CREATE TYPE IF NOT EXISTS user_role AS ENUM (
-    'MEMBER',
-    'ADMIN',
-    'OWNER'
-);
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+        CREATE TYPE user_role AS ENUM (
+            'MEMBER',
+            'ADMIN',
+            'OWNER'
+        );
+    END IF;
+END $$;
 
 -- Create cause_memberships table (junction table for users and causes)
 CREATE TABLE IF NOT EXISTS cause_memberships (
