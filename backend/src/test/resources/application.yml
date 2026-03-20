@@ -23,3 +23,12 @@ spring:
 jwt:
   secret: TEST_JWT_SECRET_KEY_WITH_AT_LEAST_32_CHARACTERS_FOR_PROPER_TESTING
   expiration: 86400000
+
+# Disable rate limiting for tests
+rate-limit:
+  general:
+    max-requests: 10000
+    window-seconds: 1
+  auth:
+    max-requests: 10000
+    window-seconds: 1

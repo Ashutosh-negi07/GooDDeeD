@@ -1,2 +1,28 @@
-2026-03-19 05:42:21.559 [main] INFO  c.g.b.s.SecurityAuditLoggerTest - Starting SecurityAuditLoggerTest using Java 24.0.1 with PID 26221 (started by blue in /Users/blue/GooDDeeD/backend)
-2026-03-19 05:42:21.563 [main] INFO  c.g.b.s.SecurityAuditLoggerTest - No active profile set, falling back to 1 default profile: "default"
+2026-03-20 06:16:27.465 [main] INFO  c.g.b.s.SecurityAuditLoggerTest - Starting SecurityAuditLoggerTest using Java 24.0.1 with PID 84542 (started by blue in /Users/blue/GooDDeeD/backend)
+2026-03-20 06:16:27.467 [main] INFO  c.g.b.s.SecurityAuditLoggerTest - No active profile set, falling back to 1 default profile: "default"
+2026-03-20 06:16:28.209 [main] INFO  c.g.b.s.SecurityAuditLoggerTest - Started SecurityAuditLoggerTest in 0.764 seconds (process running for 12.431)
+2026-03-20 06:16:28.214 [main] INFO  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_SUCCESS user=*** ip=127.0.0.1
+2026-03-20 06:16:28.262 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_FAILED user=sh***@a.com ip=127.0.0.1 reason=test
+2026-03-20 06:16:28.266 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_FAILED user=ab***@test.com ip=127.0.0.1 reason=test
+2026-03-20 06:16:28.269 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_FAILED user=us***@example.com ip=127.0.0.1 reason=test
+2026-03-20 06:16:28.277 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_FAILED user=a***@b.com ip=127.0.0.1 reason=test
+2026-03-20 06:16:28.280 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_FAILED user=us***@test.com ip=127.0.0.1 reason=Bad credentials
+2026-03-20 06:16:28.283 [main] INFO  com.gooddeeds.backend.security - SECURITY_EVENT=PASSWORD_CHANGE user=us***@test.com ip=127.0.0.1
+2026-03-20 06:16:28.285 [main] INFO  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_SUCCESS user=us***@test.com ip=127.0.0.1
+2026-03-20 06:16:28.287 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=JWT_VALIDATION_FAILED reason=Token expired ip=127.0.0.1
+2026-03-20 06:16:28.290 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=ACCESS_DENIED user=us***@test.com resource=/api/admin ip=127.0.0.1
+2026-03-20 06:16:28.292 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=SUSPICIOUS_ACTIVITY activity=SQL injection attempt user=us***@test.com ip=10.0.0.1
+2026-03-20 06:17:45.042 [main] INFO  c.g.b.s.SecurityAuditLoggerTest - Starting SecurityAuditLoggerTest using Java 24.0.1 with PID 84916 (started by blue in /Users/blue/GooDDeeD/backend)
+2026-03-20 06:17:45.043 [main] INFO  c.g.b.s.SecurityAuditLoggerTest - No active profile set, falling back to 1 default profile: "default"
+2026-03-20 06:17:45.747 [main] INFO  c.g.b.s.SecurityAuditLoggerTest - Started SecurityAuditLoggerTest in 0.735 seconds (process running for 12.048)
+2026-03-20 06:17:45.752 [main] INFO  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_SUCCESS user=*** ip=127.0.0.1
+2026-03-20 06:17:45.794 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_FAILED user=sh***@a.com ip=127.0.0.1 reason=test
+2026-03-20 06:17:45.799 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_FAILED user=ab***@test.com ip=127.0.0.1 reason=test
+2026-03-20 06:17:45.802 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_FAILED user=us***@example.com ip=127.0.0.1 reason=test
+2026-03-20 06:17:45.804 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_FAILED user=a***@b.com ip=127.0.0.1 reason=test
+2026-03-20 06:17:45.807 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_FAILED user=us***@test.com ip=127.0.0.1 reason=Bad credentials
+2026-03-20 06:17:45.810 [main] INFO  com.gooddeeds.backend.security - SECURITY_EVENT=PASSWORD_CHANGE user=us***@test.com ip=127.0.0.1
+2026-03-20 06:17:45.812 [main] INFO  com.gooddeeds.backend.security - SECURITY_EVENT=LOGIN_SUCCESS user=us***@test.com ip=127.0.0.1
+2026-03-20 06:17:45.814 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=JWT_VALIDATION_FAILED reason=Token expired ip=127.0.0.1
+2026-03-20 06:17:45.817 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=ACCESS_DENIED user=us***@test.com resource=/api/admin ip=127.0.0.1
+2026-03-20 06:17:45.819 [main] WARN  com.gooddeeds.backend.security - SECURITY_EVENT=SUSPICIOUS_ACTIVITY activity=SQL injection attempt user=us***@test.com ip=10.0.0.1
