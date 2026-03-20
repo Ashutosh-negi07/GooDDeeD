@@ -1,0 +1,2 @@
+2026-03-19 05:42:21.559 [main] INFO  c.g.b.s.SecurityAuditLoggerTest - Starting SecurityAuditLoggerTest using Java 24.0.1 with PID 26221 (started by blue in /Users/blue/GooDDeeD/backend)
+2026-03-19 05:42:21.563 [main] INFO  c.g.b.s.SecurityAuditLoggerTest - No active profile set, falling back to 1 default profile: "default"

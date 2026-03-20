@@ -5,14 +5,12 @@ import { causesAPI } from '../api/causes'
 import { goalsAPI } from '../api/goals'
 import { tasksAPI } from '../api/tasks'
 import { membershipsAPI } from '../api/memberships'
-import { useAuth } from '../hooks/useAuth'
 import toast from 'react-hot-toast'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import './ManageCausePage.css'
 
 function ManageCausePage() {
   const { id } = useParams()
-  const { user } = useAuth()
   const navigate = useNavigate()
 
   const [cause, setCause] = useState(null)

@@ -1,14 +1,19 @@
-import { createContext, useState, useEffect } from 'react'
+import { createContext, useState, useEffect, useRef } from 'react'
 import { authAPI } from '../api/auth'
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
+  const initializedRef = useRef(false)
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => !!localStorage.getItem('token'))
 
   // Restore session on mount
   useEffect(() => {
+    if (initializedRef.current) return
+    initializedRef.current = true
+
     const token = localStorage.getItem('token')
     if (token) {
       authAPI.getMe()
@@ -18,8 +23,6 @@ export function AuthProvider({ children }) {
           setUser(null)
         })
         .finally(() => setLoading(false))
-    } else {
-      setLoading(false)
     }
   }, [])
 

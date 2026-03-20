@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import ProtectedRoute from '../components/auth/ProtectedRoute'
 import { AuthProvider } from '../contexts/AuthContext'

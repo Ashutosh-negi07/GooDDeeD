@@ -20,7 +20,7 @@ describe('AuthContext', () => {
 
   it('should provide initial auth state (no user)', () => {
     const TestComponent = () => {
-      const { user, loading } = useContext(AuthContext)
+      const { user } = useContext(AuthContext)
       return (
         <div>
           {user ? `User: ${user.email}` : 'Not logged in'}
