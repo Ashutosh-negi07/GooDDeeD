@@ -36,9 +36,13 @@ class CauseControllerTest {
         MvcResult result = mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(reg)))
+                .andExpect(status().isOk())
                 .andReturn();
-        token = objectMapper.readTree(result.getResponse().getContentAsString())
-                .get("token").asText();
+        var json = objectMapper.readTree(result.getResponse().getContentAsString());
+        token = json.has("token") ? json.get("token").asText() : null;
+        if (token == null) {
+            throw new IllegalStateException("Registration failed, response: " + result.getResponse().getContentAsString());
+        }
     }
 
     // ─── Public endpoints ──────────────────────────────────────────────────
@@ -54,7 +58,7 @@ class CauseControllerTest {
     void getAllCauses_paginationParams_returnsCorrectPage() throws Exception {
         mockMvc.perform(get("/api/causes?page=0&size=5"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size").value(5));
+                .andExpect(jsonPath("$.page.size").value(5));
     }
 
     @Test
