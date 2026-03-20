@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-03-20T10:51:01.146Z",
+  "profile": "full",
+  "baseUrl": "http://localhost:8080",
+  "metrics": {
+    "http_reqs": 25747,
+    "avg_duration_ms": "39.84",
+    "p95_duration_ms": "43.28",
+    "p99_duration_ms": "N/A",
+    "http_failed_rate": "0.9854",
+    "contract_checks_rate": "0.0152",
+    "api_errors": 25371,
+    "unexpected_4xx": 25371,
+    "server_5xx": 0
+  }
+}

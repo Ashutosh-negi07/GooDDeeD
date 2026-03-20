@@ -184,7 +184,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
                 SELECT new com.gooddeeds.backend.dto.TaskStatisticsDTO(
                     COUNT(t),
                     COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMPLETED THEN 1 ELSE 0 END), 0),
-                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.ONGOING THEN 1 ELSE 0 END), 0),
+                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.IN_PROGRESS THEN 1 ELSE 0 END), 0),
                     COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMING_UP THEN 1 ELSE 0 END), 0)
                 )
                 FROM Task t
@@ -199,7 +199,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
                 SELECT new com.gooddeeds.backend.dto.TaskStatisticsDTO(
                     COUNT(t),
                     COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMPLETED THEN 1 ELSE 0 END), 0),
-                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.ONGOING THEN 1 ELSE 0 END), 0),
+                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.IN_PROGRESS THEN 1 ELSE 0 END), 0),
                     COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMING_UP THEN 1 ELSE 0 END), 0)
                 )
                 FROM Task t
@@ -217,7 +217,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
                 SELECT new com.gooddeeds.backend.dto.TaskStatisticsDTO(
                     COUNT(t),
                     COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMPLETED THEN 1 ELSE 0 END), 0),
-                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.ONGOING THEN 1 ELSE 0 END), 0),
+                    COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.IN_PROGRESS THEN 1 ELSE 0 END), 0),
                     COALESCE(SUM(CASE WHEN t.status = com.gooddeeds.backend.model.TaskStatus.COMING_UP THEN 1 ELSE 0 END), 0)
                 )
                 FROM Task t

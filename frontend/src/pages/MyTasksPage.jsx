@@ -42,7 +42,7 @@ function MyTasksPage() {
 
   const statusColors = {
     COMING_UP: { bg: 'rgba(245, 158, 11, 0.1)', color: '#D97706', label: 'Coming Up' },
-    ONGOING: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', label: 'Ongoing' },
+    IN_PROGRESS: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', label: 'In Progress' },
     COMPLETED: { bg: 'rgba(16, 185, 129, 0.1)', color: '#059669', label: 'Completed' },
   }
 
@@ -66,7 +66,7 @@ function MyTasksPage() {
           >
             <option value="">All Statuses</option>
             <option value="COMING_UP">Coming Up</option>
-            <option value="ONGOING">Ongoing</option>
+            <option value="IN_PROGRESS">In Progress</option>
             <option value="COMPLETED">Completed</option>
           </select>
           <select

@@ -207,7 +207,7 @@ function ManageCausePage() {
 
   const statusOptions = [
     { value: 'COMING_UP', label: 'Coming Up', color: '#D97706' },
-    { value: 'ONGOING', label: 'Ongoing', color: '#3B82F6' },
+    { value: 'IN_PROGRESS', label: 'In Progress', color: '#3B82F6' },
     { value: 'COMPLETED', label: 'Completed', color: '#059669' },
   ]
 

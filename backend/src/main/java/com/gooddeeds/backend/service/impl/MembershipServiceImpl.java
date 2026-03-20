@@ -46,7 +46,7 @@ public class MembershipServiceImpl implements MembershipService {
         // First member becomes ADMIN
         Role role = membershipRepository.findByCauseId(causeId).isEmpty()
                 ? Role.ADMIN
-                : Role.SUPPORTER;
+                : Role.MEMBER;
 
         CauseMembership membership = CauseMembership.builder()
                 .user(user)

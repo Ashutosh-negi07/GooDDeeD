@@ -11,6 +11,8 @@ spring:
       idle-timeout: 300000
       max-lifetime: 1200000
       leak-detection-threshold: 60000
+      data-source-properties:
+        stringtype: unspecified
 
   jpa:
     hibernate:
