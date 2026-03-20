@@ -24,7 +24,7 @@ export default defineConfig({
   build: {
     // Production build optimizations
     target: 'esnext',
-    minify: 'terser',
+    minify: 'esbuild',
     sourcemap: false,
     rollupOptions: {
       output: {
