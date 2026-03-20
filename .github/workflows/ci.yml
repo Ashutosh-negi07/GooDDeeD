@@ -9,28 +9,8 @@ jobs:
   backend-test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: gooddeeds_backbone
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d gooddeeds_backbone"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     env:
       JWT_SECRET: CI_LOCAL_DEVELOPMENT_SECRET_KEY_AT_LEAST_32_CHARS
-      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/gooddeeds_backbone
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: false
       SPRING_FLYWAY_ENABLED: false
 
     steps:
