@@ -32,8 +32,6 @@ spring:
     validate-on-migrate: true
     out-of-order: false
     locations: classpath:db/migration
-    # Skip sample data migration in production
-    ignore-migration-patterns: "**/V2__*"
 
   security:
     headers:
