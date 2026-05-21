@@ -57,7 +57,7 @@ function MyCausesPage() {
         {loading ? (
           <div className="mycauses-loading">
             <div className="explore-spinner"></div>
-            <p>Loading causes...</p>
+            <p>Cold starting the causes...</p>
           </div>
         ) : causes.length === 0 ? (
           <div className="mycauses-empty">

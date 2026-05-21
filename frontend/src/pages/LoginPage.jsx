@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { Eye, EyeOff } from 'lucide-react'
@@ -11,6 +11,8 @@ function LoginPage() {
   const [showPw, setShowPw]     = useState(false)
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
+  const [slowHint, setSlowHint] = useState(false)
+  const slowTimer               = useRef(null)
 
   const { login }   = useAuth()
   const navigate    = useNavigate()
@@ -18,7 +20,9 @@ function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setSlowHint(false)
     setLoading(true)
+    slowTimer.current = setTimeout(() => setSlowHint(true), 3000)
     try {
       await login(email, password)
       navigate('/dashboard')
@@ -29,7 +33,9 @@ function LoginPage() {
         || 'Invalid email or password.'
       setError(msg)
     } finally {
+      clearTimeout(slowTimer.current)
       setLoading(false)
+      setSlowHint(false)
     }
   }
 
@@ -124,6 +130,12 @@ function LoginPage() {
               {loading ? 'Signing in…' : 'Sign In'}
               {!loading && <span className="btn-arrow">→</span>}
             </button>
+
+            {slowHint && (
+              <p className="auth-cold-hint">
+                🌱 Cold starting the server… this may take a moment.
+              </p>
+            )}
           </form>
 
           <p className="auth-switch">

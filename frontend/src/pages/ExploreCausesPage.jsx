@@ -122,7 +122,7 @@ function ExploreCausesPage() {
           {loading ? (
             <div className="explore-loading">
               <div className="explore-spinner"></div>
-              <p>Loading causes...</p>
+              <p>Cold starting the causes...</p>
             </div>
           ) : displayedCauses.length === 0 ? (
             <div className="explore-empty">

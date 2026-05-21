@@ -7,10 +7,174 @@
     <meta name="description" content="GooDDeeD — Join thousands of volunteers making an impact in communities worldwide. Create causes, set goals, and complete tasks that make a difference." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
     <title>GooDDeeD — Make a Difference</title>
+    <style>
+      #app-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        background: linear-gradient(145deg, #0D2B1E 0%, #1B4332 55%, #2D6A4F 100%);
+        font-family: 'Sora', 'Inter', system-ui, sans-serif;
+        transition: opacity 0.55s ease, visibility 0.55s ease;
+      }
+      #app-splash.splash-hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      /* Ambient glow orbs */
+      .splash-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.18;
+        animation: orbFloat 6s ease-in-out infinite;
+      }
+      .splash-orb-1 {
+        width: 400px; height: 400px;
+        background: #52B788;
+        top: -80px; left: -80px;
+        animation-delay: 0s;
+      }
+      .splash-orb-2 {
+        width: 300px; height: 300px;
+        background: #F59E0B;
+        bottom: -60px; right: -60px;
+        animation-delay: 3s;
+      }
+
+      /* Logo area */
+      .splash-logo-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 48px;
+        animation: splashFadeUp 0.7s ease both;
+      }
+      .splash-icon {
+        width: 80px; height: 80px;
+        background: rgba(82, 183, 136, 0.15);
+        border: 1.5px solid rgba(82, 183, 136, 0.35);
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.4rem;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 0 40px rgba(82, 183, 136, 0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+        animation: splashPulse 2.5s ease-in-out infinite;
+      }
+      .splash-brand {
+        font-size: 2.4rem;
+        font-weight: 800;
+        color: #fff;
+        letter-spacing: -1px;
+        line-height: 1;
+      }
+      .splash-brand span {
+        color: #52B788;
+      }
+      .splash-tagline {
+        font-family: 'Inter', system-ui, sans-serif;
+        font-size: 0.95rem;
+        font-weight: 400;
+        color: rgba(255,255,255,0.5);
+        letter-spacing: 0.5px;
+        margin-top: -8px;
+      }
+
+      /* Progress bar */
+      .splash-progress-wrap {
+        width: 220px;
+        height: 3px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 9999px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        animation: splashFadeUp 0.7s 0.15s ease both;
+      }
+      .splash-progress-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #52B788, #F59E0B);
+        border-radius: 9999px;
+        animation: splashProgress 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+
+      /* Status text */
+      .splash-status {
+        font-family: 'Inter', system-ui, sans-serif;
+        font-size: 0.8rem;
+        color: rgba(255,255,255,0.38);
+        letter-spacing: 0.5px;
+        animation: splashFadeUp 0.7s 0.25s ease both;
+      }
+      .splash-dots span {
+        display: inline-block;
+        animation: splashDot 1.4s ease-in-out infinite;
+        opacity: 0;
+      }
+      .splash-dots span:nth-child(2) { animation-delay: 0.2s; }
+      .splash-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+      /* Keyframes */
+      @keyframes splashFadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes splashProgress {
+        0%   { width: 0%; }
+        40%  { width: 60%; }
+        70%  { width: 78%; }
+        90%  { width: 90%; }
+        100% { width: 98%; }
+      }
+      @keyframes splashPulse {
+        0%, 100% { box-shadow: 0 0 40px rgba(82, 183, 136, 0.25), inset 0 1px 0 rgba(255,255,255,0.1); }
+        50%       { box-shadow: 0 0 60px rgba(82, 183, 136, 0.45), inset 0 1px 0 rgba(255,255,255,0.15); }
+      }
+      @keyframes orbFloat {
+        0%, 100% { transform: translateY(0px) scale(1); }
+        50%       { transform: translateY(-30px) scale(1.05); }
+      }
+      @keyframes splashDot {
+        0%, 80%, 100% { opacity: 0; }
+        40%            { opacity: 1; }
+      }
+    </style>
   </head>
   <body>
+
+    <!-- Splash Screen (removed by main.jsx after React mounts) -->
+    <div id="app-splash" aria-hidden="true">
+      <div class="splash-orb splash-orb-1"></div>
+      <div class="splash-orb splash-orb-2"></div>
+
+      <div class="splash-logo-wrap">
+        <div class="splash-icon">🌱</div>
+        <div>
+          <div class="splash-brand">GooD<span>DeeD</span></div>
+          <div class="splash-tagline">Make a difference, every day</div>
+        </div>
+      </div>
+
+      <div class="splash-progress-wrap">
+        <div class="splash-progress-bar"></div>
+      </div>
+
+      <div class="splash-status">
+        Loading<span class="splash-dots"><span>.</span><span>.</span><span>.</span></span>
+      </div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

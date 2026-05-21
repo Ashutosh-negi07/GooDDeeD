@@ -23,3 +23,12 @@ createRoot(document.getElementById('root')).render(
     />
   </StrictMode>,
 )
+
+// Dismiss splash screen once React has painted
+const splash = document.getElementById('app-splash')
+if (splash) {
+  setTimeout(() => {
+    splash.classList.add('splash-hidden')
+    splash.addEventListener('transitionend', () => splash.remove(), { once: true })
+  }, 2800)
+}

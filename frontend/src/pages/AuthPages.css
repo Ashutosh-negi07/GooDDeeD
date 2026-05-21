@@ -146,6 +146,29 @@
 .auth-switch a { color: var(--color-primary); font-weight: 700; }
 .auth-switch a:hover { color: var(--color-primary-dark); text-decoration: underline; }
 
+/* Cold start hint */
+.auth-cold-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 10px 14px;
+  background: rgba(45, 106, 79, 0.06);
+  border: 1px solid rgba(45, 106, 79, 0.18);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  color: var(--color-primary-dark);
+  text-align: center;
+  line-height: 1.5;
+  animation: splashFadeUp 0.4s ease both;
+}
+
+@keyframes splashFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .auth-page               { grid-template-columns: 1fr; }

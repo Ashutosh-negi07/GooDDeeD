@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { Eye, EyeOff } from 'lucide-react'
@@ -15,6 +15,8 @@ function RegisterPage() {
   const [error, setError]                 = useState('')
   const [fieldErrors, setFieldErrors]     = useState({}) // from backend 400 fieldErrors map
   const [loading, setLoading]             = useState(false)
+  const [slowHint, setSlowHint]           = useState(false)
+  const slowTimer                         = useRef(null)
 
   const { register } = useAuth()
   const navigate     = useNavigate()
@@ -27,6 +29,7 @@ function RegisterPage() {
     e.preventDefault()
     setError('')
     setFieldErrors({})
+    setSlowHint(false)
 
     if (password !== confirmPassword) {
       setError('Passwords do not match')
@@ -38,6 +41,7 @@ function RegisterPage() {
     }
 
     setLoading(true)
+    slowTimer.current = setTimeout(() => setSlowHint(true), 3000)
     try {
       await register(name, email, password)
       navigate('/dashboard')
@@ -53,7 +57,9 @@ function RegisterPage() {
         setError(msg)
       }
     } finally {
+      clearTimeout(slowTimer.current)
       setLoading(false)
+      setSlowHint(false)
     }
   }
 
@@ -194,6 +200,12 @@ function RegisterPage() {
               {loading ? 'Creating account…' : 'Create Account'}
               {!loading && <span className="btn-arrow">→</span>}
             </button>
+
+            {slowHint && (
+              <p className="auth-cold-hint">
+                🌱 Cold starting the server… this may take a moment.
+              </p>
+            )}
           </form>
 
           <p className="auth-switch">
