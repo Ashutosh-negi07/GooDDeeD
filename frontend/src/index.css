@@ -1,57 +1,72 @@
 /* ===== GooDDeeD Design System ===== */
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Colors */
+  /* Primary Greens */
   --color-primary: #2D6A4F;
   --color-primary-dark: #1B4332;
+  --color-primary-deeper: #0D2B1E;
   --color-primary-light: #52B788;
   --color-primary-lighter: #D8F3DC;
   --color-primary-bg: #F0FFF4;
 
+  /* Amber Accent */
+  --color-accent: #F59E0B;
+  --color-accent-dark: #D97706;
+  --color-accent-light: #FEF3C7;
+
+  /* Neutrals */
   --color-white: #FFFFFF;
   --color-black: #1B1B1B;
   --color-text: #1B1B1B;
   --color-text-muted: #6B7280;
   --color-text-light: #9CA3AF;
   --color-border: #E5E7EB;
-  --color-bg-light: #F9FAFB;
+  --color-bg-light: #F8FAF9;
+  --color-surface: #F0FFF4;
 
-  --color-footer-bg: #1B2A1F;
-  --color-footer-text: #D1D5DB;
+  /* Footer */
+  --color-footer-bg: #0D1F15;
+  --color-footer-text: #C9D5CE;
 
   /* Typography */
+  --font-display: 'Sora', 'Inter', system-ui, sans-serif;
   --font-family: 'Inter', system-ui, -apple-system, sans-serif;
 
   /* Spacing */
-  --section-padding: 80px 0;
+  --section-padding: 100px 0;
   --container-max: 1200px;
   --container-padding: 0 24px;
 
   /* Border Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
 
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
+  --shadow-card-hover: 0 20px 60px rgba(45, 106, 79, 0.18), 0 8px 20px rgba(0,0,0,0.08);
+  --shadow-glow-green: 0 0 30px rgba(82, 183, 136, 0.35);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255,255,255,0.15);
+
+  /* Gradients */
+  --gradient-hero: linear-gradient(135deg, #0D2B1E 0%, #1B4332 50%, #2D6A4F 100%);
+  --gradient-card: linear-gradient(145deg, #ffffff 0%, #F0FFF4 100%);
+  --gradient-cta: linear-gradient(135deg, #2D6A4F 0%, #1B4332 60%, #0D2B1E 100%);
+  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
 
   /* Transitions */
-  --transition-fast: 0.2s ease;
+  --transition-fast: 0.18s ease;
   --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
 }
 
 /* ===== Global Reset ===== */
-
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 html {
   scroll-behavior: smooth;
@@ -67,38 +82,18 @@ body {
   background-color: var(--color-white);
 }
 
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
+img { max-width: 100%; height: auto; display: block; }
 
-a {
-  text-decoration: none;
-  color: inherit;
-  transition: color var(--transition-fast);
-}
+a { text-decoration: none; color: inherit; transition: color var(--transition-fast); }
 
-ul, ol {
-  list-style: none;
-}
+ul, ol { list-style: none; }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  outline: none;
-  background: none;
-}
+button { font-family: inherit; cursor: pointer; border: none; outline: none; background: none; }
 
-/* ===== Utility Classes ===== */
+/* ===== Layout ===== */
+.container { max-width: var(--container-max); margin: 0 auto; padding: var(--container-padding); }
 
-.container {
-  max-width: var(--container-max);
-  margin: 0 auto;
-  padding: var(--container-padding);
-}
-
+/* ===== Buttons ===== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -110,19 +105,19 @@ button {
   transition: all var(--transition-normal);
   cursor: pointer;
   white-space: nowrap;
+  font-family: inherit;
 }
 
 .btn-primary {
-  background-color: var(--color-primary);
+  background: var(--gradient-primary);
   color: var(--color-white);
-  border: 2px solid var(--color-primary);
+  border: 2px solid transparent;
+  box-shadow: 0 4px 15px rgba(45, 106, 79, 0.3);
 }
-
 .btn-primary:hover {
-  background-color: var(--color-primary-dark);
-  border-color: var(--color-primary-dark);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 8px 25px rgba(45, 106, 79, 0.4);
+  filter: brightness(1.08);
 }
 
 .btn-outline {
@@ -130,7 +125,6 @@ button {
   color: var(--color-primary);
   border: 2px solid var(--color-primary);
 }
-
 .btn-outline:hover {
   background-color: var(--color-primary);
   color: var(--color-white);
@@ -142,8 +136,8 @@ button {
   background-color: var(--color-white);
   color: var(--color-primary);
   border: 2px solid var(--color-white);
+  font-weight: 700;
 }
-
 .btn-white:hover {
   background-color: transparent;
   color: var(--color-white);
@@ -151,15 +145,112 @@ button {
   transform: translateY(-2px);
 }
 
+.btn-danger {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: var(--color-white);
+  border: 2px solid transparent;
+}
+.btn-danger:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(239, 68, 68, 0.35); }
+
+.btn-sm   { padding: 8px 18px; font-size: 0.85rem; }
+.btn-lg   { padding: 16px 40px; font-size: 1.05rem; }
+
+.btn-arrow { font-size: 1.1em; transition: transform var(--transition-fast); }
+.btn:hover .btn-arrow { transform: translateX(4px); }
+
+/* ===== Typography ===== */
 .section-title {
-  font-size: 2.25rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
   font-weight: 800;
   color: var(--color-text);
   margin-bottom: 12px;
+  letter-spacing: -0.5px;
 }
 
 .section-subtitle {
-  font-size: 1.125rem;
+  font-size: 1.1rem;
   color: var(--color-text-muted);
-  max-width: 600px;
+  max-width: 580px;
+  line-height: 1.7;
+}
+
+/* ===== Form Globals ===== */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 11px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  background: var(--color-white);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+}
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.12);
+}
+
+/* ===== Animations ===== */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(82, 183, 136, 0.4); }
+  50%       { box-shadow: 0 0 0 10px rgba(82, 183, 136, 0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+/* ===== Skeleton Loader ===== */
+.skeleton {
+  background: linear-gradient(90deg, #e8f5e9 25%, #c8e6c9 50%, #e8f5e9 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ===== Spinner ===== */
+.explore-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-primary-lighter);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
 }

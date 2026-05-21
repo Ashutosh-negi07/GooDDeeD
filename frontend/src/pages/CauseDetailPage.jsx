@@ -93,7 +93,8 @@ function CauseDetailPage() {
     }
   }
 
-  const isAdmin = membership?.role === 'ADMIN'
+  // Fix: Role enum has MEMBER | ADMIN | OWNER — OWNER must also have admin access
+  const isAdmin = membership?.role === 'ADMIN' || membership?.role === 'OWNER'
   const isMember = membership?.approved === true
 
   const goalText = goals
@@ -119,9 +120,10 @@ function CauseDetailPage() {
   }
 
   const statusColors = {
-    COMING_UP: { bg: 'rgba(245, 158, 11, 0.1)', color: '#D97706', label: 'Coming Up' },
-    IN_PROGRESS: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6', label: 'In Progress' },
-    COMPLETED: { bg: 'rgba(16, 185, 129, 0.1)', color: '#059669', label: 'Completed' },
+    COMING_UP:   { bg: 'rgba(245, 158, 11, 0.1)',  color: '#D97706', label: 'Coming Up' },
+    IN_PROGRESS: { bg: 'rgba(59, 130, 246, 0.1)',  color: '#3B82F6', label: 'In Progress' },
+    COMPLETED:   { bg: 'rgba(16, 185, 129, 0.1)',  color: '#059669', label: 'Completed' },
+    CANCELLED:   { bg: 'rgba(239, 68, 68, 0.1)',   color: '#EF4444', label: 'Cancelled' },
   }
 
   return (

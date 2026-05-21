@@ -1,27 +1,29 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { Eye, EyeOff } from 'lucide-react'
 import authOcean from '../assets/auth-ocean.png'
 import './AuthPages.css'
 
 function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [showPw, setShowPw]     = useState(false)
+  const [error, setError]       = useState('')
+  const [loading, setLoading]   = useState(false)
 
-  const { login } = useAuth()
-  const navigate = useNavigate()
+  const { login }   = useAuth()
+  const navigate    = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
       await login(email, password)
       navigate('/dashboard')
     } catch (err) {
+      // GlobalExceptionHandler returns { message: "Invalid email or password" } on BadCredentialsException
       const msg = err.response?.data?.message
         || err.response?.data?.error
         || 'Invalid email or password.'
@@ -33,6 +35,7 @@ function LoginPage() {
 
   return (
     <div className="auth-page">
+      {/* Image Side */}
       <div className="auth-image-side">
         <img src={authOcean} alt="Volunteers cleaning a beach" />
         <div className="auth-image-overlay"></div>
@@ -45,9 +48,15 @@ function LoginPage() {
           <p className="auth-image-subtitle">
             Continue your journey of making a positive impact in communities worldwide.
           </p>
+          <div className="auth-image-chips">
+            <span className="auth-image-chip">1,200+ Volunteers</span>
+            <span className="auth-image-chip">350+ Causes</span>
+            <span className="auth-image-chip">Free to join</span>
+          </div>
         </div>
       </div>
 
+      {/* Form Side */}
       <div className="auth-form-side">
         <div className="auth-form-container">
           <div className="auth-form-header">
@@ -84,15 +93,25 @@ function LoginPage() {
 
             <div className="form-group">
               <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-              />
+              <div className="auth-pw-wrap">
+                <input
+                  id="password"
+                  type={showPw ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className="auth-pw-toggle"
+                  onClick={() => setShowPw(p => !p)}
+                  aria-label={showPw ? 'Hide password' : 'Show password'}
+                >
+                  {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <button
@@ -101,13 +120,14 @@ function LoginPage() {
               disabled={loading}
               id="login-submit"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? <span className="auth-spinner" /> : null}
+              {loading ? 'Signing in…' : 'Sign In'}
               {!loading && <span className="btn-arrow">→</span>}
             </button>
           </form>
 
           <p className="auth-switch">
-            Don't have an account? <Link to="/register">Create one</Link>
+            Don't have an account? <Link to="/register">Create one free</Link>
           </p>
         </div>
       </div>
